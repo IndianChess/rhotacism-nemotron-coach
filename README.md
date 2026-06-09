@@ -9,6 +9,10 @@ python_version: '3.12'
 app_file: app.py
 pinned: false
 license: mit
+hf_oauth: true
+hf_oauth_scopes:
+  - openid
+  - profile
 ---
 
 # Rivet R Coach
@@ -32,12 +36,22 @@ Public GitHub repo: https://github.com/IndianChess/rhotacism-nemotron-coach
    - Value: a read token from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
    - Save and let the Space rebuild.
 
-The `HF_TOKEN` is required for the LLM coach (Nemotron inference). If it's missing,
-the app will still launch and score recordings, but coach feedback will fall
-back to a generic message.
+The `HF_TOKEN` is required for the LLM coach (Nemotron inference) and for
+server-side progress saves to the private `IndianChess/rivet-progress` Dataset.
+If it's missing, the app will still launch and score recordings, but coach
+feedback falls back to a generic message and progress is session-only.
 
 > ⏳ **First request may take a minute** while the wav2vec2 phoneme model
 > (~315 MB) is downloaded and warmed up.
+
+
+## User progress
+
+Rivet R Coach enables Hugging Face OAuth (`hf_oauth: true`) so users can sign
+in from the home screen. Signed-in users can resume saved XP, streak, level,
+and recent attempt history. Progress is written to the private Hugging Face
+Dataset `IndianChess/rivet-progress`; override the target with the
+`PROGRESS_DATASET` environment variable if you fork the app.
 
 ## Local development
 
