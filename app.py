@@ -637,7 +637,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
                 elem_id="level-btn-2", elem_classes=["rivet-level-btn"],
             )
             level_btn_3 = gr.Button(
-                "Level 4\nBlends & Vocalic R", variant="secondary",
+                "Level 4\nVocalic R", variant="secondary",
                 elem_id="level-btn-3", elem_classes=["rivet-level-btn"],
             )
             level_btn_4 = gr.Button(

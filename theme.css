@@ -76,16 +76,23 @@ footer, .gradio-container footer { display: none !important; }
   .rivet-main { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 
-/* ---------------- Cards / panels ---------------- */
-.rivet-card,
-.gradio-container .gr-panel,
-.gradio-container .block {
+/* ---------------- Cards / panels ----------------
+   Only elements that explicitly opt into .rivet-card get the white-paper
+   card treatment. Stripping the global .block rule kills the "every
+   gr.HTML in its own card" effect that was littering the home view. */
+.rivet-card {
   background: white !important;
   border-radius: 20px !important;
   box-shadow: 0 4px 24px var(--rivet-shadow) !important;
   border: none !important;
+  padding: 2rem 1.75rem !important;
 }
-.rivet-card { padding: 2rem 1.75rem !important; }
+.gradio-container .gr-panel,
+.gradio-container .block {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
 
 /* ---------------- Word + IPA display ---------------- */
 .rivet-word {
@@ -529,12 +536,23 @@ footer, .gradio-container footer { display: none !important; }
   gap: 1rem;
 }
 .rivet-header-row > div:first-child { flex: 1; }
-.rivet-login-btn { flex: 0 0 auto !important; max-width: 220px; }
-.rivet-login-btn button {
+.rivet-login-btn { flex: 0 0 auto !important; max-width: 200px; }
+.gradio-container .rivet-login-btn button,
+.gradio-container .rivet-login-btn button.primary,
+.gradio-container .rivet-login-btn .gr-button-primary {
+  background: var(--rivet-ink) !important;
+  color: white !important;
   border-radius: 999px !important;
   font-weight: 600 !important;
-  padding: 0.55rem 1.1rem !important;
-  font-size: 0.9rem !important;
+  font-size: 0.82rem !important;
+  padding: 0.45rem 1rem !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+.gradio-container .rivet-login-btn button:hover {
+  background: var(--rivet-coral) !important;
+  transform: none !important;
 }
 
 /* Constrain the home and practice views so nothing stretches */
@@ -657,7 +675,9 @@ footer, .gradio-container footer { display: none !important; }
 }
 .rivet-level-grid > div { min-width: 0 !important; }
 .rivet-level-btn { width: 100% !important; }
-.rivet-level-btn button {
+.gradio-container .rivet-level-btn button,
+.gradio-container .rivet-level-btn button.secondary,
+.gradio-container .rivet-level-btn .gr-button-secondary {
   background: white !important;
   border: 1px solid var(--rivet-mist) !important;
   border-radius: 16px !important;
@@ -665,26 +685,29 @@ footer, .gradio-container footer { display: none !important; }
   color: var(--rivet-ink) !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 600 !important;
-  font-size: 0.88rem !important;
-  min-height: 96px !important;
-  padding: 0.85rem 0.5rem !important;
+  font-size: 0.82rem !important;
+  min-height: 92px !important;
+  padding: 0.75rem 0.4rem !important;
   text-align: center !important;
   white-space: pre-line !important;
-  line-height: 1.35 !important;
+  line-height: 1.3 !important;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
-.rivet-level-btn button:hover {
+.gradio-container .rivet-level-btn button:hover,
+.gradio-container .rivet-level-btn button.secondary:hover,
+.gradio-container .rivet-level-btn .gr-button-secondary:hover {
   border-color: var(--rivet-coral) !important;
   box-shadow: 0 8px 22px rgba(15, 42, 77, 0.12) !important;
-  transform: translateY(-2px);
+  transform: translateY(-2px) !important;
+  background: white !important;
 }
 
-/* The line before the label (e.g. "Level 1") is rendered larger via
-   the first-line pseudo, even though both lines share one button. */
+/* The first line of each label (e.g. "Level 1") renders smaller and
+   blue, the second line (the level name) stays normal. */
 .rivet-level-btn button::first-line {
   font-family: 'League Spartan', sans-serif;
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--rivet-coral);
 }
