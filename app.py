@@ -209,17 +209,17 @@ def _welcome_html(profile_username: str | None, profile_name: str | None) -> str
     if profile_username:
         display = profile_name or profile_username
         return (
-            f"<div class='rivet-welcome'>"
+            f"<div class='rivet-welcome-card'>"
             f"  <div class='rivet-welcome-eyebrow'>Welcome back</div>"
             f"  <div class='rivet-welcome-name'>{display}</div>"
-            f"  <div class='rivet-welcome-hint'>Pick a level to practice. Your progress saves automatically.</div>"
+            f"  <div class='rivet-welcome-hint'>Your progress saves automatically.</div>"
             f"</div>"
         )
     return (
-        f"<div class='rivet-welcome'>"
-        f"  <div class='rivet-welcome-eyebrow'>Hello</div>"
+        f"<div class='rivet-welcome-card'>"
+        f"  <div class='rivet-welcome-eyebrow'>Welcome</div>"
         f"  <div class='rivet-welcome-name'>Practice the /r/ sound</div>"
-        f"  <div class='rivet-welcome-hint'>Sign in with Hugging Face to save your progress across sessions.</div>"
+        f"  <div class='rivet-welcome-hint'>Sign in with Hugging Face to save progress across sessions.</div>"
         f"</div>"
     )
 
@@ -233,13 +233,11 @@ def _resume_card_html(progress: dict) -> str:
     label = LEVEL_LABELS.get(level, f"Level {level + 1}")
     return (
         f"<div class='rivet-resume-card'>"
-        f"  <div class='rivet-resume-label'>Resume where you left off</div>"
+        f"  <div class='rivet-resume-label'>Continue your practice</div>"
         f"  <div class='rivet-resume-stats'>"
         f"    <span class='rivet-resume-level'>{label}</span>"
-        f"    <span class='rivet-resume-dot'>·</span>"
-        f"    <span class='rivet-resume-xp'>💫 {xp} XP</span>"
-        f"    <span class='rivet-resume-dot'>·</span>"
-        f"    <span class='rivet-resume-streak'>🔥 {streak} streak</span>"
+        f"    <span class='rivet-resume-chip'>💫 {xp} XP</span>"
+        f"    <span class='rivet-resume-chip'>🔥 {streak} streak</span>"
         f"  </div>"
         f"</div>"
     )
@@ -348,19 +346,51 @@ def _start_session(level: int, history: list, xp: int, streak: int, best_streak:
     )
 
 
-def on_pick_level(level: int, username: str):
-    """User tapped one of the five level buttons on Home. Fresh session at
-    that level — XP/streak reset to 0 unless they hit Resume instead."""
-    _ = username  # username is preserved separately in remembered_user_state
-    return _start_session(level, history=[], xp=0, streak=0, best_streak=0)
+def _load_session_state(profile: gr.OAuthProfile | None) -> dict:
+    """Pull the user's saved progress from the HF Dataset at click time.
+
+    This is the single source of truth for resume / level-pick — we always
+    re-fetch instead of trusting whatever stale gr.State values are sitting
+    in the browser. Without this the session resets every time the user
+    bounces between Home and Practice.
+    """
+    username = profile.username if profile is not None else None
+    if not username:
+        return {"level": 0, "xp": 0, "streak": 0, "best_streak": 0, "history": []}
+    progress = load_progress(username) or {}
+    return {
+        "level":       int(progress.get("level", 0)),
+        "xp":          int(progress.get("xp", 0)),
+        "streak":      int(progress.get("streak", 0)),
+        "best_streak": int(progress.get("best_streak", 0)),
+        "history":     list(progress.get("history", [])),
+    }
 
 
-def on_resume(username: str, level: int, xp: int, streak: int,
-              best_streak: int, history: list):
-    """User tapped 'Resume where you left off'."""
-    _ = username
-    return _start_session(level, history=history, xp=xp,
-                          streak=streak, best_streak=best_streak)
+def on_pick_level(level: int, profile: gr.OAuthProfile | None):
+    """User tapped one of the five level buttons. Keep accumulated XP,
+    best_streak, and history — just jump to the chosen level."""
+    saved = _load_session_state(profile)
+    return _start_session(
+        level=level,
+        history=saved["history"],
+        xp=saved["xp"],
+        streak=saved["streak"],
+        best_streak=saved["best_streak"],
+    )
+
+
+def on_resume(profile: gr.OAuthProfile | None):
+    """User tapped 'Resume where you left off'. Replay everything from
+    the dataset, including the level they were last on."""
+    saved = _load_session_state(profile)
+    return _start_session(
+        level=saved["level"],
+        history=saved["history"],
+        xp=saved["xp"],
+        streak=saved["streak"],
+        best_streak=saved["best_streak"],
+    )
 
 
 def on_back_home(username: str, level: int, xp: int, streak: int,
@@ -591,27 +621,27 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
             elem_classes=["rivet-resume-btn"],
         )
 
-        gr.HTML("<div class='rivet-pick-title'>Or pick a level to start fresh</div>")
+        gr.HTML("<div class='rivet-pick-title'>Choose a level to practice</div>")
 
         with gr.Row(elem_classes=["rivet-level-grid"]):
             level_btn_0 = gr.Button(
-                "🅛🅔🅥🅔🅛 1\nSyllables", variant="secondary",
+                "Level 1\nSyllables", variant="secondary",
                 elem_id="level-btn-0", elem_classes=["rivet-level-btn"],
             )
             level_btn_1 = gr.Button(
-                "🅛🅔🅥🅔🅛 2\nStarting Words", variant="secondary",
+                "Level 2\nStarting Words", variant="secondary",
                 elem_id="level-btn-1", elem_classes=["rivet-level-btn"],
             )
             level_btn_2 = gr.Button(
-                "🅛🅔🅥🅔🅛 3\nMiddle & End", variant="secondary",
+                "Level 3\nMiddle & End", variant="secondary",
                 elem_id="level-btn-2", elem_classes=["rivet-level-btn"],
             )
             level_btn_3 = gr.Button(
-                "🅛🅔🅥🅔🅛 4\nBlends & Vocalic", variant="secondary",
+                "Level 4\nBlends & Vocalic R", variant="secondary",
                 elem_id="level-btn-3", elem_classes=["rivet-level-btn"],
             )
             level_btn_4 = gr.Button(
-                "🅛🅔🅥🅔🅛 5\nPhrases", variant="secondary",
+                "Level 5\nPhrases", variant="secondary",
                 elem_id="level-btn-4", elem_classes=["rivet-level-btn"],
             )
 
@@ -757,11 +787,12 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
     # App boot — render home, populate welcome + resume from progress dataset
     demo.load(on_app_load, inputs=None, outputs=app_load_outputs)
 
-    # Level pickers — each one starts a fresh session at that level
+    # Level pickers — re-load progress from dataset at click time, then
+    # jump to the chosen level. OAuthProfile is auto-injected by Gradio.
     def _wire_level_btn(btn, level):
         btn.click(
             on_pick_level,
-            inputs=[gr.State(level), remembered_user_state],
+            inputs=[gr.State(level)],
             outputs=start_session_outputs,
         )
     _wire_level_btn(level_btn_0, 0)
@@ -770,13 +801,10 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
     _wire_level_btn(level_btn_3, 3)
     _wire_level_btn(level_btn_4, 4)
 
-    # Resume button — continue from saved level + XP + streak
+    # Resume button — re-load from dataset, restore saved level/XP/streak.
     resume_btn.click(
         on_resume,
-        inputs=[
-            remembered_user_state,
-            level_state, xp_state, streak_state, best_streak_state, history_state,
-        ],
+        inputs=None,
         outputs=start_session_outputs,
     )
 

@@ -518,132 +518,200 @@ footer, .gradio-container footer { display: none !important; }
 }
 
 /* ================================================================
-   HOME / SIGN-IN FLOW
+   HOME VIEW — paper-card style matching the practice area
    ================================================================ */
+
+/* Header row keeps the wordmark + login button on one line */
 .rivet-header-row {
-  max-width: 1120px;
-  margin: 0 auto 1rem auto;
+  max-width: 760px;
+  margin: 0 auto 1.5rem auto;
   align-items: center;
+  gap: 1rem;
 }
 .rivet-header-row > div:first-child { flex: 1; }
+.rivet-login-btn { flex: 0 0 auto !important; max-width: 220px; }
 .rivet-login-btn button {
   border-radius: 999px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
+  padding: 0.55rem 1.1rem !important;
+  font-size: 0.9rem !important;
 }
+
+/* Constrain the home and practice views so nothing stretches */
 .rivet-home,
 .rivet-practice {
-  max-width: 1120px;
+  max-width: 760px;
   margin: 0 auto;
 }
-.rivet-home {
-  padding: 1.25rem 0 0.5rem 0;
-}
-.rivet-welcome {
-  background:
-    radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.16), transparent 26%),
-    radial-gradient(circle at 88% 28%, rgba(249, 115, 22, 0.16), transparent 24%),
-    linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  border-radius: 28px;
-  box-shadow: 0 18px 50px rgba(15, 42, 77, 0.10);
-  padding: clamp(1.5rem, 4vw, 3rem);
+
+/* ── Welcome card — clean white paper, no gradient ── */
+.rivet-welcome-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px var(--rivet-shadow);
+  padding: 2.5rem 2rem 2.25rem 2rem;
+  margin-bottom: 1rem;
   text-align: center;
+  border: none;
 }
 .rivet-welcome-eyebrow {
-  color: var(--rivet-coral);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: 0.45rem;
+  color: var(--rivet-coral);
+  margin-bottom: 0.5rem;
 }
 .rivet-welcome-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 2.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   color: var(--rivet-ink);
-  font-size: clamp(2rem, 5vw, 3.75rem);
-  font-weight: 900;
-  letter-spacing: -0.055em;
-  line-height: 0.95;
+  margin-bottom: 0.6rem;
+}
+@media (max-width: 560px) {
+  .rivet-welcome-name { font-size: 2rem; }
 }
 .rivet-welcome-hint {
-  color: rgba(15, 42, 77, 0.68);
-  font-size: 1.02rem;
-  margin: 1rem auto 0 auto;
-  max-width: 620px;
+  font-size: 0.95rem;
+  color: var(--rivet-ink);
+  opacity: 0.6;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.55;
 }
+
+/* ── Resume card — same white paper, no dark theme ── */
 #rivet-resume-wrap:empty { display: none; }
 .rivet-resume-card {
-  background: var(--rivet-ink);
-  color: white;
-  border-radius: 22px;
-  margin: 1rem auto 0.75rem auto;
-  max-width: 760px;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 14px 34px rgba(15, 42, 77, 0.18);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px var(--rivet-shadow);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0.75rem;
+  border: none;
 }
 .rivet-resume-label {
-  color: rgba(255,255,255,0.72);
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 0.3rem;
+  color: var(--rivet-coral);
+  margin-bottom: 0.55rem;
 }
 .rivet-resume-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.6rem;
   align-items: center;
-  font-weight: 700;
 }
-.rivet-resume-dot { opacity: 0.45; }
+.rivet-resume-level {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--rivet-ink);
+  margin-right: 0.25rem;
+}
+.rivet-resume-chip {
+  background: var(--rivet-pink);
+  color: var(--rivet-coral);
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 .rivet-resume-btn {
-  max-width: 360px;
-  margin: 0.25rem auto 1.35rem auto;
+  margin: 0 0 1.5rem 0 !important;
+  width: 100% !important;
 }
+.rivet-resume-btn button {
+  width: 100% !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  padding: 0.85rem 1.5rem !important;
+}
+
+/* ── "Choose a level" title ── */
 .rivet-pick-title {
-  color: rgba(15, 42, 77, 0.58);
-  font-size: 0.86rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 1.3rem 0 0.8rem 0;
-  text-align: center;
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--rivet-ink);
+  opacity: 0.55;
+  margin: 1.5rem 0 1rem 0;
+  text-align: center;
 }
+
+/* ── 5-card level grid, uniform sizing, no stretching ── */
 .rivet-level-grid {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
 }
 .rivet-level-grid > div { min-width: 0 !important; }
+.rivet-level-btn { width: 100% !important; }
 .rivet-level-btn button {
   background: white !important;
-  border: 1px solid rgba(37, 99, 235, 0.14) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 10px 30px rgba(15, 42, 77, 0.08) !important;
+  border: 1px solid var(--rivet-mist) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 14px var(--rivet-shadow) !important;
   color: var(--rivet-ink) !important;
-  font-weight: 800 !important;
-  min-height: 92px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  min-height: 96px !important;
+  padding: 0.85rem 0.5rem !important;
+  text-align: center !important;
   white-space: pre-line !important;
+  line-height: 1.35 !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 .rivet-level-btn button:hover {
-  border-color: rgba(249, 115, 22, 0.40) !important;
-  box-shadow: 0 16px 36px rgba(15, 42, 77, 0.13) !important;
-  transform: translateY(-1px);
+  border-color: var(--rivet-coral) !important;
+  box-shadow: 0 8px 22px rgba(15, 42, 77, 0.12) !important;
+  transform: translateY(-2px);
 }
+
+/* The line before the label (e.g. "Level 1") is rendered larger via
+   the first-line pseudo, even though both lines share one button. */
+.rivet-level-btn button::first-line {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--rivet-coral);
+}
+
+/* ── Back-to-home button ── */
 .rivet-practice-top {
   margin: 0 0 0.75rem 0;
 }
+.rivet-back-btn { max-width: 140px; }
 .rivet-back-btn button {
-  background: var(--rivet-cream) !important;
-  border: 1px solid rgba(15, 42, 77, 0.10) !important;
+  background: white !important;
+  border: 1px solid var(--rivet-mist) !important;
   color: var(--rivet-ink) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
+  border-radius: 999px !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.9rem !important;
 }
-@media (max-width: 920px) {
+.rivet-back-btn button:hover {
+  border-color: var(--rivet-coral) !important;
+  background: var(--rivet-pink) !important;
+}
+
+/* ── Responsive layouts ── */
+@media (max-width: 720px) {
   .rivet-level-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 560px) {
+@media (max-width: 420px) {
   .rivet-level-grid { grid-template-columns: 1fr; }
-  .rivet-resume-stats { flex-direction: column; align-items: flex-start; }
-  .rivet-resume-dot { display: none; }
 }
