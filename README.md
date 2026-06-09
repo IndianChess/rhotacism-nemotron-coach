@@ -17,6 +17,10 @@ A Gradio app that helps people practice the English /r/ sound. It transcribes
 your recording into IPA phonemes using a wav2vec2 phoneme model, measures the
 F3 formant with Praat, and a Nemotron LLM gives warm, specific coaching feedback.
 
+## Repository
+
+Public GitHub repo: https://github.com/IndianChess/rhotacism-nemotron-coach
+
 ## Deploying on Hugging Face Spaces
 
 1. Create a new Space with **SDK = Gradio**.
