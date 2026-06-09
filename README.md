@@ -10,9 +10,6 @@ app_file: app.py
 pinned: false
 license: mit
 hf_oauth: true
-hf_oauth_scopes:
-  - openid
-  - profile
 ---
 
 # Rivet R Coach
