@@ -658,7 +658,9 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
         )
         gr.HTML(f"""
 <style>
-/* Card layout — image on top, name underneath */
+/* Card layout — image on top, name underneath. The image area is a
+   flex child that grows to fill whatever vertical space the card has,
+   so the picture is always shown in full (background-size: contain). */
 {_level_btn_selectors} {{
   background: white !important;
   border: 1px solid var(--rivet-mist) !important;
@@ -667,11 +669,13 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
   color: var(--rivet-ink) !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 600 !important;
-  font-size: 0.92rem !important;
+  font-size: 0.95rem !important;
   letter-spacing: -0.005em !important;
   width: 100% !important;
-  min-height: 210px !important;
-  padding: 0 0 0.85rem 0 !important;
+  height: 270px !important;
+  min-height: 270px !important;
+  max-height: 270px !important;
+  padding: 0.65rem 0.5rem 0.85rem 0.5rem !important;
   text-align: center !important;
   line-height: 1.3 !important;
   white-space: normal !important;
@@ -679,21 +683,21 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  justify-content: space-between !important;
+  justify-content: flex-end !important;
   cursor: pointer !important;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
 }}
 {_level_btn_before_selectors} {{
   content: '';
   display: block;
-  height: 158px;
   width: 100%;
   background-image: var(--level-img);
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  flex: 0 0 auto;
-  margin-bottom: 0.65rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0.55rem;
 }}
 {_level_btn_hover_selectors} {{
   border-color: var(--rivet-coral) !important;
