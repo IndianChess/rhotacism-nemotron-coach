@@ -688,63 +688,11 @@ footer, .gradio-container footer { display: none !important; }
 .rivet-level-grid > div { min-width: 0 !important; }
 .rivet-level-btn { width: 100% !important; height: 100% !important; }
 
-.gradio-container .rivet-level-btn button,
-.gradio-container .rivet-level-btn button.secondary,
-.gradio-container .rivet-level-btn .gr-button-secondary {
-  background: white !important;
-  border: 1px solid var(--rivet-mist) !important;
-  border-radius: 18px !important;
-  box-shadow: 0 4px 14px var(--rivet-shadow) !important;
-  color: var(--rivet-ink) !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 600 !important;
-  font-size: 0.92rem !important;
-  letter-spacing: -0.005em !important;
-  width: 100% !important;
-  min-height: 210px !important;
-  padding: 0 0 0.85rem 0 !important;
-  text-align: center !important;
-  line-height: 1.3 !important;
-  white-space: normal !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-end !important;
-  cursor: pointer !important;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
-}
-
-/* Graphic — fills the top portion of the card. Uses the per-card
-   --level-img variable so we don't repeat CSS five times. */
-.gradio-container .rivet-level-btn button::before {
-  content: '';
-  display: block;
-  height: 158px;
-  width: 100%;
-  background-image: var(--level-img);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  flex: 0 0 auto;
-}
-
-/* Level name padding — sits below the graphic in the card footer.
-   The graphic already shows a circled level number, so we don't
-   need a separate "LEVEL N" eyebrow. */
-.gradio-container .rivet-level-btn button > * {
-  padding: 0.65rem 0.4rem 0 0.4rem;
-  flex: 0 0 auto;
-}
-
-.gradio-container .rivet-level-btn button:hover,
-.gradio-container .rivet-level-btn button.secondary:hover,
-.gradio-container .rivet-level-btn .gr-button-secondary:hover {
-  border-color: var(--rivet-coral) !important;
-  box-shadow: 0 12px 26px rgba(15, 42, 77, 0.14) !important;
-  transform: translateY(-3px) !important;
-  background: white !important;
-}
+/* Level module styling lives in an inline <style> injected from app.py
+   (right next to the buttons). That keeps it co-located with the per-
+   card image URLs and guarantees it ships AFTER any bundled Gradio CSS
+   so we don't lose to specificity / SSR weirdness. See `_level_img_css`
+   in app.py. */
 
 /* ── Back-to-home button ── */
 .rivet-practice-top {

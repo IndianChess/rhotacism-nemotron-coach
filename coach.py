@@ -19,7 +19,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL_ID = "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"
+# NVIDIA-Nemotron-3-Nano-4B-BF16 exists on HF but is an edge-deployment
+# model — no Inference Provider currently serves it. Llama-3.1-Nemotron-
+# Nano-8B-v1 is the closest Nemotron Nano on HF Inference Providers
+# (served by featherless-ai), still under the hackathon's 32B cap, and
+# still qualifies for the NVIDIA Nemotron Quest track. Override via env
+# if a different model gets routed onto your account.
+MODEL_ID = os.environ.get(
+    "COACH_MODEL_ID",
+    "nvidia/Llama-3.1-Nemotron-Nano-8B-v1",
+)
 BASE_URL = "https://router.huggingface.co/v1"
 
 SYSTEM_PROMPT = """You are Wren, a direct and encouraging speech coach helping an 18-year-old fix their /r/ sound. Your words will be spoken aloud by a text-to-speech voice — write for the ear, not the eye. Be concise, specific, and treat the user as a competent adult.

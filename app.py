@@ -623,18 +623,88 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
 
         gr.HTML("<div class='rivet-pick-title'>Choose a level to practice</div>")
 
-        # Background-image URLs for each level module card. Defined here so
-        # Gradio's static-file middleware resolves them at request time.
-        _level_img_css = (
-            "<style>"
-            f"#level-btn-0 {{ --level-img: url('{_asset_url('levels/level_1.png')}'); }}"
-            f"#level-btn-1 {{ --level-img: url('{_asset_url('levels/level_2.png')}'); }}"
-            f"#level-btn-2 {{ --level-img: url('{_asset_url('levels/level_3.png')}'); }}"
-            f"#level-btn-3 {{ --level-img: url('{_asset_url('levels/level_4.png')}'); }}"
-            f"#level-btn-4 {{ --level-img: url('{_asset_url('levels/level_5.png')}'); }}"
-            "</style>"
+        # Inline <style> for the level module cards. Co-located with the
+        # buttons so it ships in the body (after any bundled Gradio CSS)
+        # and wins on cascade order, not just specificity. Each card's
+        # graphic is set via the `--level-img` CSS variable so we don't
+        # repeat the card-styling block five times.
+        #
+        # We hit BOTH `#level-btn-N` (in case Gradio puts elem_id on the
+        # wrapper) AND `button#level-btn-N` (in case it goes on the button
+        # itself). Whichever element actually carries the ID, the rule
+        # matches with high specificity (1,0,1+).
+        _level_imgs = [
+            _asset_url(f"levels/level_{i}.png") for i in range(1, 6)
+        ]
+        _level_btn_selectors = ", ".join(
+            f"#level-btn-{i}, button#level-btn-{i}, "
+            f"#level-btn-{i} button"
+            for i in range(5)
         )
-        gr.HTML(_level_img_css)
+        _level_btn_hover_selectors = ", ".join(
+            f"#level-btn-{i}:hover, button#level-btn-{i}:hover, "
+            f"#level-btn-{i} button:hover"
+            for i in range(5)
+        )
+        _level_btn_before_selectors = ", ".join(
+            f"#level-btn-{i}::before, button#level-btn-{i}::before, "
+            f"#level-btn-{i} button::before"
+            for i in range(5)
+        )
+        _per_card_img_rules = "\n".join(
+            f"#level-btn-{i}, button#level-btn-{i}, #level-btn-{i} button "
+            f"{{ --level-img: url('{_level_imgs[i]}'); }}"
+            for i in range(5)
+        )
+        gr.HTML(f"""
+<style>
+/* Card layout — image on top, name underneath */
+{_level_btn_selectors} {{
+  background: white !important;
+  border: 1px solid var(--rivet-mist) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 14px var(--rivet-shadow) !important;
+  color: var(--rivet-ink) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.92rem !important;
+  letter-spacing: -0.005em !important;
+  width: 100% !important;
+  min-height: 210px !important;
+  padding: 0 0 0.85rem 0 !important;
+  text-align: center !important;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
+}}
+{_level_btn_before_selectors} {{
+  content: '';
+  display: block;
+  height: 158px;
+  width: 100%;
+  background-image: var(--level-img);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex: 0 0 auto;
+  margin-bottom: 0.65rem;
+}}
+{_level_btn_hover_selectors} {{
+  border-color: var(--rivet-coral) !important;
+  box-shadow: 0 12px 26px rgba(15, 42, 77, 0.14) !important;
+  transform: translateY(-3px) !important;
+  background: white !important;
+}}
+/* Per-card image variables */
+{_per_card_img_rules}
+</style>
+""")
 
         with gr.Row(elem_classes=["rivet-level-grid"]):
             level_btn_0 = gr.Button(
