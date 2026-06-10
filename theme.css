@@ -682,11 +682,24 @@ footer, .gradio-container footer { display: none !important; }
 .rivet-level-grid {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: 270px;
+  align-items: start;
   gap: 0.9rem;
   margin-bottom: 0.5rem;
 }
-.rivet-level-grid > div { min-width: 0 !important; }
-.rivet-level-btn { width: 100% !important; height: 100% !important; }
+/* Force every direct child (the wrapper Gradio puts around each Button)
+   to the row height. Without this, the default grid stretch + Gradio's
+   internal flex wrappers push the buttons up to ~580px tall. */
+.rivet-level-grid > * {
+  min-width: 0 !important;
+  height: 270px !important;
+  max-height: 270px !important;
+  align-self: start !important;
+}
+.rivet-level-grid > * > * {
+  height: 100% !important;
+}
+.rivet-level-btn { width: 100% !important; height: 270px !important; }
 
 /* Level module styling lives in an inline <style> injected from app.py
    (right next to the buttons). That keeps it co-located with the per-

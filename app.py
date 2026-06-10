@@ -672,7 +672,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
   font-size: 0.95rem !important;
   letter-spacing: -0.005em !important;
   width: 100% !important;
-  height: 270px !important;
+  height: 100% !important;
   min-height: 270px !important;
   max-height: 270px !important;
   padding: 0.65rem 0.5rem 0.85rem 0.5rem !important;
