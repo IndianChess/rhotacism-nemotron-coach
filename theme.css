@@ -26,7 +26,7 @@ body, .gradio-container, .gradio-container * {
 .gradio-container {
   background: var(--rivet-cream) !important;
   color: var(--rivet-ink) !important;
-  max-width: 1120px !important;
+  max-width: 1040px !important;
   margin: 0 auto !important;
   padding: 1.25rem 1.5rem 2.5rem 1.5rem !important;
   line-height: 1.6 !important;
@@ -530,7 +530,7 @@ footer, .gradio-container footer { display: none !important; }
 
 /* Header row keeps the wordmark + login button on one line */
 .rivet-header-row {
-  max-width: 760px;
+  max-width: 940px;
   margin: 0 auto 1.5rem auto;
   align-items: center;
   gap: 1rem;
@@ -555,10 +555,15 @@ footer, .gradio-container footer { display: none !important; }
   transform: none !important;
 }
 
-/* Constrain the home and practice views so nothing stretches */
-.rivet-home,
+/* Constrain the home and practice views so nothing stretches.
+   Home is wider so the 5-up level module grid breathes; practice
+   stays narrower to keep the word + coach focused. */
+.rivet-home {
+  max-width: 940px;
+  margin: 0 auto;
+}
 .rivet-practice {
-  max-width: 760px;
+  max-width: 940px;
   margin: 0 auto;
 }
 
@@ -568,9 +573,10 @@ footer, .gradio-container footer { display: none !important; }
   border-radius: 20px;
   box-shadow: 0 4px 24px var(--rivet-shadow);
   padding: 2.5rem 2rem 2.25rem 2rem;
-  margin-bottom: 1rem;
+  margin: 0 auto 1rem auto;
   text-align: center;
   border: none;
+  max-width: 680px;
 }
 .rivet-welcome-eyebrow {
   font-family: 'League Spartan', sans-serif;
@@ -609,8 +615,9 @@ footer, .gradio-container footer { display: none !important; }
   border-radius: 20px;
   box-shadow: 0 4px 24px var(--rivet-shadow);
   padding: 1.25rem 1.5rem;
-  margin-bottom: 0.75rem;
+  margin: 0 auto 0.75rem auto;
   border: none;
+  max-width: 680px;
 }
 .rivet-resume-label {
   font-family: 'League Spartan', sans-serif;
@@ -644,7 +651,8 @@ footer, .gradio-container footer { display: none !important; }
   font-weight: 600;
 }
 .rivet-resume-btn {
-  margin: 0 0 1.5rem 0 !important;
+  margin: 0 auto 1.5rem auto !important;
+  max-width: 680px !important;
   width: 100% !important;
 }
 .rivet-resume-btn button {
@@ -667,49 +675,75 @@ footer, .gradio-container footer { display: none !important; }
   text-align: center;
 }
 
-/* ── 5-card level grid, uniform sizing, no stretching ── */
+/* ── 5-up level module grid ──
+   Each module is a clickable card: graphic on top, name underneath.
+   The graphic is set per-card via the `--level-img` CSS variable,
+   injected from app.py with the Gradio-resolved asset URL. */
 .rivet-level-grid {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 .rivet-level-grid > div { min-width: 0 !important; }
-.rivet-level-btn { width: 100% !important; }
+.rivet-level-btn { width: 100% !important; height: 100% !important; }
+
 .gradio-container .rivet-level-btn button,
 .gradio-container .rivet-level-btn button.secondary,
 .gradio-container .rivet-level-btn .gr-button-secondary {
   background: white !important;
   border: 1px solid var(--rivet-mist) !important;
-  border-radius: 16px !important;
+  border-radius: 18px !important;
   box-shadow: 0 4px 14px var(--rivet-shadow) !important;
   color: var(--rivet-ink) !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 600 !important;
-  font-size: 0.82rem !important;
-  min-height: 92px !important;
-  padding: 0.75rem 0.4rem !important;
+  font-size: 0.92rem !important;
+  letter-spacing: -0.005em !important;
+  width: 100% !important;
+  min-height: 210px !important;
+  padding: 0 0 0.85rem 0 !important;
   text-align: center !important;
-  white-space: pre-line !important;
   line-height: 1.3 !important;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  white-space: normal !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  cursor: pointer !important;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
 }
+
+/* Graphic — fills the top portion of the card. Uses the per-card
+   --level-img variable so we don't repeat CSS five times. */
+.gradio-container .rivet-level-btn button::before {
+  content: '';
+  display: block;
+  height: 158px;
+  width: 100%;
+  background-image: var(--level-img);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex: 0 0 auto;
+}
+
+/* Level name padding — sits below the graphic in the card footer.
+   The graphic already shows a circled level number, so we don't
+   need a separate "LEVEL N" eyebrow. */
+.gradio-container .rivet-level-btn button > * {
+  padding: 0.65rem 0.4rem 0 0.4rem;
+  flex: 0 0 auto;
+}
+
 .gradio-container .rivet-level-btn button:hover,
 .gradio-container .rivet-level-btn button.secondary:hover,
 .gradio-container .rivet-level-btn .gr-button-secondary:hover {
   border-color: var(--rivet-coral) !important;
-  box-shadow: 0 8px 22px rgba(15, 42, 77, 0.12) !important;
-  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 26px rgba(15, 42, 77, 0.14) !important;
+  transform: translateY(-3px) !important;
   background: white !important;
-}
-
-/* The first line of each label (e.g. "Level 1") renders smaller and
-   blue, the second line (the level name) stays normal. */
-.rivet-level-btn button::first-line {
-  font-family: 'League Spartan', sans-serif;
-  font-weight: 700;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--rivet-coral);
 }
 
 /* ── Back-to-home button ── */

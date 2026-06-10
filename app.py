@@ -623,25 +623,38 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
 
         gr.HTML("<div class='rivet-pick-title'>Choose a level to practice</div>")
 
+        # Background-image URLs for each level module card. Defined here so
+        # Gradio's static-file middleware resolves them at request time.
+        _level_img_css = (
+            "<style>"
+            f"#level-btn-0 {{ --level-img: url('{_asset_url('levels/level_1.png')}'); }}"
+            f"#level-btn-1 {{ --level-img: url('{_asset_url('levels/level_2.png')}'); }}"
+            f"#level-btn-2 {{ --level-img: url('{_asset_url('levels/level_3.png')}'); }}"
+            f"#level-btn-3 {{ --level-img: url('{_asset_url('levels/level_4.png')}'); }}"
+            f"#level-btn-4 {{ --level-img: url('{_asset_url('levels/level_5.png')}'); }}"
+            "</style>"
+        )
+        gr.HTML(_level_img_css)
+
         with gr.Row(elem_classes=["rivet-level-grid"]):
             level_btn_0 = gr.Button(
-                "Level 1\nSyllables", variant="secondary",
+                "Syllables", variant="secondary",
                 elem_id="level-btn-0", elem_classes=["rivet-level-btn"],
             )
             level_btn_1 = gr.Button(
-                "Level 2\nStarting Words", variant="secondary",
+                "Starting Words", variant="secondary",
                 elem_id="level-btn-1", elem_classes=["rivet-level-btn"],
             )
             level_btn_2 = gr.Button(
-                "Level 3\nMiddle & End", variant="secondary",
+                "Middle & End", variant="secondary",
                 elem_id="level-btn-2", elem_classes=["rivet-level-btn"],
             )
             level_btn_3 = gr.Button(
-                "Level 4\nVocalic R", variant="secondary",
+                "Vocalic R", variant="secondary",
                 elem_id="level-btn-3", elem_classes=["rivet-level-btn"],
             )
             level_btn_4 = gr.Button(
-                "Level 5\nPhrases", variant="secondary",
+                "Phrases", variant="secondary",
                 elem_id="level-btn-4", elem_classes=["rivet-level-btn"],
             )
 
