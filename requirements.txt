@@ -9,8 +9,14 @@ praat-parselmouth==0.4.7
 phonemizer==3.3.0
 python-dotenv==1.2.2
 pocket-tts==2.1.0
-# Local coach backend (COACH_BACKEND=local). The pip wheel includes
-# CPU support everywhere; on Apple Silicon it auto-uses Metal, on
-# Linux x86_64 it falls back to AVX. For NVIDIA GPU acceleration,
-# reinstall with the CUDA wheel index per llama-cpp-python docs.
-llama-cpp-python>=0.3.2
+# Local coach backend (COACH_BACKEND=local). We pin a precompiled
+# CPU wheel from abetlen's index — HF Spaces' CPU-tier build runner
+# OOMs (exit 137) when pip tries to compile llama-cpp-python from
+# source. The wheel index has cp312 Linux x86_64 builds ready to go.
+#
+# For local Mac dev: the regular PyPI wheel auto-uses Metal — you
+# don't need this extra index, but it's harmless.
+# For NVIDIA GPU Spaces: swap "cpu" → "cu121" (or your CUDA version)
+# in the URL below.
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python==0.3.28
