@@ -537,6 +537,18 @@ footer, .gradio-container footer { display: none !important; }
 }
 .rivet-header-row > div:first-child { flex: 1; }
 .rivet-login-btn { flex: 0 0 auto !important; max-width: 200px; }
+.rivet-local-badge {
+  flex: 0 0 auto;
+  background: var(--rivet-pink);
+  color: var(--rivet-coral);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.95rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  align-self: center;
+}
 .gradio-container .rivet-login-btn button,
 .gradio-container .rivet-login-btn button.primary,
 .gradio-container .rivet-login-btn .gr-button-primary {

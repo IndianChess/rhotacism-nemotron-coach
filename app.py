@@ -585,6 +585,12 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
     ready_bridge   = gr.Textbox(value="false",                         visible=False, elem_id="rivet-ready-bridge")
 
     # ---- Header ----
+    # gr.LoginButton requires either a real Space environment or a local
+    # HF_TOKEN to bootstrap its mock OAuth handler. When running locally
+    # without a token, we replace it with a static badge so the app still
+    # boots — OAuth-gated features (progress sync) just stay session-only.
+    _running_on_space = bool(os.environ.get("SPACE_ID"))
+    _has_hf_token     = bool(os.environ.get("HF_TOKEN", "").strip())
     with gr.Row(elem_classes=["rivet-header-row"]):
         gr.HTML(
             "<div class='rivet-header'>"
@@ -593,10 +599,17 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
             "    aria-label='About Rivet R Coach'>About</button>"
             "</div>"
         )
-        login_btn = gr.LoginButton(
-            value="Sign in with Hugging Face",
-            elem_classes=["rivet-login-btn"],
-        )
+        if _running_on_space or _has_hf_token:
+            login_btn = gr.LoginButton(
+                value="Sign in with Hugging Face",
+                elem_classes=["rivet-login-btn"],
+            )
+        else:
+            gr.HTML(
+                "<div class='rivet-local-badge' title='Running locally — "
+                "set HF_TOKEN to enable cross-session progress sync.'>"
+                "🏡 Local mode</div>"
+            )
 
     # ---- About modal ----
     gr.HTML(

@@ -1,4 +1,4 @@
-gradio==5.50.0
+gradio[oauth]==5.50.0
 openai==2.36.0
 huggingface_hub==1.14.0
 transformers==5.8.1

@@ -33,7 +33,7 @@ load_dotenv()
 # ---------------------------------------------------------------------------
 # Backend selection
 # ---------------------------------------------------------------------------
-BACKEND = os.environ.get("COACH_BACKEND", "router").lower()
+BACKEND = os.environ.get("COACH_BACKEND", "local").lower()
 if BACKEND not in {"router", "local"}:
     print(f"[coach] unknown COACH_BACKEND={BACKEND!r}, falling back to 'router'")
     BACKEND = "router"
@@ -55,7 +55,11 @@ LOCAL_REPO  = os.environ.get(
     "nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF",
 )
 LOCAL_QUANT = os.environ.get("COACH_LOCAL_QUANT", "Q4_K_M")
-LOCAL_CTX   = int(os.environ.get("COACH_LOCAL_CTX", "4096"))
+# The coach SYSTEM_PROMPT below is ~3.5k tokens; combined with the user
+# message + room for the JSON reply we routinely cross 4096. 8192 gives
+# comfortable headroom without bloating the KV cache. Nemotron-3-Nano-4B
+# itself supports up to 262K, so this is the safe lower bound, not a ceiling.
+LOCAL_CTX   = int(os.environ.get("COACH_LOCAL_CTX", "8192"))
 
 SYSTEM_PROMPT = """You are Wren, a direct and encouraging speech coach helping an 18-year-old fix their /r/ sound. Your words will be spoken aloud by a text-to-speech voice — write for the ear, not the eye. Be concise, specific, and treat the user as a competent adult.
 
@@ -276,7 +280,9 @@ def _get_local_llm():
         filename=f"*{LOCAL_QUANT}*",
         n_ctx=LOCAL_CTX,
         n_gpu_layers=-1,   # full Metal/CUDA offload where available; harmless on CPU
-        verbose=False,
+        n_batch=1024,      # bigger prefill batches → faster prompt processing on Metal
+        n_threads=int(os.environ.get("COACH_LOCAL_THREADS", "0")) or None,
+        verbose=os.environ.get("COACH_LOCAL_VERBOSE", "0") == "1",
     )
     print(f"[coach] local model loaded in {time.time() - t0:.1f}s")
     return llm
