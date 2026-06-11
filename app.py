@@ -51,8 +51,17 @@ print("[startup] TTS ready.")
 
 import gradio as gr
 
+import coach
 from coach import coach_turn
 from progress import load_progress, save_progress
+
+# When COACH_BACKEND=local, pull the GGUF + warm the llama.cpp handle now
+# instead of paying the cost on the first user turn. Matches wav2vec2 and
+# pocket-tts above. Router backend is a no-op aside from a token sanity
+# probe.
+print(f"[startup] Preloading coach backend ({coach.BACKEND})...")
+coach.preload()
+print("[startup] coach backend ready.")
 from scoring import score_pronunciation
 from words import (
     get_next_word,

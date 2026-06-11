@@ -1,4 +1,14 @@
-"""Wren, the /r/ practice coach. NVIDIA Nemotron 3 Nano 4B via Hugging Face Inference Providers.
+"""Wren, the /r/ practice coach.
+
+Two interchangeable backends:
+  * router  (default) — HF Inference Providers, Llama-3.1-Nemotron-Nano-8B-v1
+              served by featherless-ai. Cloud, fast, needs HF_TOKEN.
+  * local             — llama-cpp-python loading NVIDIA-Nemotron-3-Nano-4B
+              (Q4_K_M GGUF, ~2.84 GB). Zero cloud calls, qualifies for the
+              hackathon's "Off the Grid" bonus badge.
+
+Pick via COACH_BACKEND env var. coach_turn() signature is identical for
+both — callers don't care which path runs.
 
 coach_turn(state, score_dict, user_transcript) -> dict
     spoken_reply       (str, < 55 words for low TTS latency)
@@ -13,23 +23,39 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from functools import lru_cache
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# NVIDIA-Nemotron-3-Nano-4B-BF16 exists on HF but is an edge-deployment
-# model — no Inference Provider currently serves it. Llama-3.1-Nemotron-
-# Nano-8B-v1 is the closest Nemotron Nano on HF Inference Providers
-# (served by featherless-ai), still under the hackathon's 32B cap, and
-# still qualifies for the NVIDIA Nemotron Quest track. Override via env
-# if a different model gets routed onto your account.
-MODEL_ID = os.environ.get(
+# ---------------------------------------------------------------------------
+# Backend selection
+# ---------------------------------------------------------------------------
+BACKEND = os.environ.get("COACH_BACKEND", "router").lower()
+if BACKEND not in {"router", "local"}:
+    print(f"[coach] unknown COACH_BACKEND={BACKEND!r}, falling back to 'router'")
+    BACKEND = "router"
+
+# --- router backend (HF Inference Providers) ---
+ROUTER_MODEL_ID = os.environ.get(
     "COACH_MODEL_ID",
     "nvidia/Llama-3.1-Nemotron-Nano-8B-v1",
 )
-BASE_URL = "https://router.huggingface.co/v1"
+ROUTER_BASE_URL = "https://router.huggingface.co/v1"
+
+# Backwards-compat alias (used by anything that imported MODEL_ID directly).
+MODEL_ID = ROUTER_MODEL_ID
+BASE_URL = ROUTER_BASE_URL
+
+# --- local backend (llama.cpp + GGUF) ---
+LOCAL_REPO  = os.environ.get(
+    "COACH_LOCAL_REPO",
+    "nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF",
+)
+LOCAL_QUANT = os.environ.get("COACH_LOCAL_QUANT", "Q4_K_M")
+LOCAL_CTX   = int(os.environ.get("COACH_LOCAL_CTX", "4096"))
 
 SYSTEM_PROMPT = """You are Wren, a direct and encouraging speech coach helping an 18-year-old fix their /r/ sound. Your words will be spoken aloud by a text-to-speech voice — write for the ear, not the eye. Be concise, specific, and treat the user as a competent adult.
 
@@ -227,12 +253,72 @@ Ex 4 — Intro for phrase "red rose":
 
 
 @lru_cache(maxsize=1)
-def _get_client():
+def _get_router_client():
+    """OpenAI-protocol client pointed at HF's Inference Providers router."""
     from openai import OpenAI
     token = os.environ.get("HF_TOKEN")
     if not token:
-        raise RuntimeError("HF_TOKEN not set — cannot call NVIDIA Nemotron 3 Nano 4B via HF router.")
-    return OpenAI(base_url=BASE_URL, api_key=token)
+        raise RuntimeError(
+            "HF_TOKEN not set — cannot call the router backend. "
+            "Either set HF_TOKEN or switch to COACH_BACKEND=local."
+        )
+    return OpenAI(base_url=ROUTER_BASE_URL, api_key=token)
+
+
+@lru_cache(maxsize=1)
+def _get_local_llm():
+    """Lazily build the llama-cpp-python handle and cache it for the process."""
+    from llama_cpp import Llama
+    print(f"[coach] loading local model {LOCAL_REPO} ({LOCAL_QUANT})...")
+    t0 = time.time()
+    llm = Llama.from_pretrained(
+        repo_id=LOCAL_REPO,
+        filename=f"*{LOCAL_QUANT}*",
+        n_ctx=LOCAL_CTX,
+        n_gpu_layers=-1,   # full Metal/CUDA offload where available; harmless on CPU
+        verbose=False,
+    )
+    print(f"[coach] local model loaded in {time.time() - t0:.1f}s")
+    return llm
+
+
+def _chat_router(messages: list[dict]) -> str:
+    """One JSON-mode round trip to the HF router. Returns raw assistant text."""
+    client = _get_router_client()
+    resp = client.chat.completions.create(
+        model=ROUTER_MODEL_ID,
+        messages=messages,
+        response_format={"type": "json_object"},
+        temperature=0.6,
+        max_tokens=400,
+    )
+    return resp.choices[0].message.content
+
+
+def _chat_local(messages: list[dict]) -> str:
+    """One JSON-mode round trip to the locally-loaded GGUF model."""
+    llm = _get_local_llm()
+    resp = llm.create_chat_completion(
+        messages=messages,
+        response_format={"type": "json_object"},
+        temperature=0.6,
+        max_tokens=400,
+    )
+    return resp["choices"][0]["message"]["content"]
+
+
+# Public helper so app.py can preload the model at startup when BACKEND=local
+def preload() -> None:
+    """Force-load whichever backend we're configured for. Safe to call twice."""
+    if BACKEND == "local":
+        _get_local_llm()
+    else:
+        # Router path doesn't really preload — but probe the token now so we
+        # fail loudly at startup instead of silently on the first turn.
+        try:
+            _get_router_client()
+        except RuntimeError as e:
+            print(f"[coach] {e}")
 
 
 def _format_recent(history: list[dict]) -> str:
@@ -441,31 +527,20 @@ def coach_turn(
     user_transcript: str | None,
 ) -> dict:
     default = _default_response(state, score_dict)
-    try:
-        client = _get_client()
-    except RuntimeError as e:
-        print(f"[coach] {e}")
-        return default
 
-    import time
-    user_msg = _build_user_message(state, score_dict, user_transcript)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",   "content": _build_user_message(state, score_dict, user_transcript)},
+    ]
+
     t0 = time.time()
     try:
-        resp = client.chat.completions.create(
-            model=MODEL_ID,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": user_msg},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.6,
-            max_tokens=400,
-        )
-        content = resp.choices[0].message.content
+        content = _chat_local(messages) if BACKEND == "local" else _chat_router(messages)
     except Exception as e:
-        print(f"[coach] inference error: {e}")
+        print(f"[coach] {BACKEND} inference error: {e}")
         return default
-    print(f"[coach] {MODEL_ID} round-trip {time.time()-t0:.2f}s")
+    label = LOCAL_REPO if BACKEND == "local" else ROUTER_MODEL_ID
+    print(f"[coach] {BACKEND}:{label} round-trip {time.time() - t0:.2f}s")
 
     parsed = _parse_json(content)
     if not isinstance(parsed, dict):

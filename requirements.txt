@@ -9,3 +9,8 @@ praat-parselmouth==0.4.7
 phonemizer==3.3.0
 python-dotenv==1.2.2
 pocket-tts==2.1.0
+# Local coach backend (COACH_BACKEND=local). The pip wheel includes
+# CPU support everywhere; on Apple Silicon it auto-uses Metal, on
+# Linux x86_64 it falls back to AVX. For NVIDIA GPU acceleration,
+# reinstall with the CUDA wheel index per llama-cpp-python docs.
+llama-cpp-python>=0.3.2

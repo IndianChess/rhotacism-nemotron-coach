@@ -75,10 +75,36 @@ model the app uses and let you confirm or edit the IPA before saving.
 python build_word_list.py
 ```
 
+## Coach backend (router vs local)
+
+The coach LLM has two interchangeable backends, picked by the `COACH_BACKEND`
+env var:
+
+| `COACH_BACKEND` | Model                                                  | Where it runs                                  | Needs           |
+| --------------- | ------------------------------------------------------ | ---------------------------------------------- | --------------- |
+| `router` *(default)* | `nvidia/Llama-3.1-Nemotron-Nano-8B-v1`            | HF Inference Providers (featherless-ai)        | `HF_TOKEN`      |
+| `local`         | `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` (Q4_K_M, 2.84 GB) | llama-cpp-python in-process, GPU/Metal/CPU auto | nothing         |
+
+Local mode satisfies the hackathon's **Off the Grid** bonus quest (no cloud
+APIs in the loop) and the **Llama Champion** bonus (llama.cpp runtime).
+First boot downloads the GGUF (~3 GB) into `~/.cache/huggingface/hub/`;
+subsequent starts are instant. On a free CPU Space expect ~20–40 s per
+coach turn; on Apple Silicon or a GPU Space it's a second or two.
+
+Override the GGUF source if you need a different quant:
+
+```bash
+COACH_BACKEND=local \
+COACH_LOCAL_REPO=lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF \
+COACH_LOCAL_QUANT=Q6_K \
+python app.py
+```
+
 ## Disclaimer
 
 This is a practice tool, not a substitute for a licensed speech-language
 pathologist. Recordings are processed locally; transcripts are sent to a
-hosted LLM (Nemotron) for feedback generation.
+hosted LLM (Nemotron) for feedback generation in router mode, or stay on
+the device in local mode.
 
 Configuration reference: https://huggingface.co/docs/hub/spaces-config-reference
