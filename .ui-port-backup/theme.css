@@ -1,0 +1,747 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=League+Spartan:wght@500;600;700&display=swap');
+
+:root {
+  --rivet-cream: #FFFFFF;
+  --rivet-ink: #0F2A4D;
+  --rivet-coral: #2563EB;
+  --rivet-coral-dark: #1D4ED8;
+  --rivet-pink: #DBEAFE;
+  --rivet-butter: #FEF3C7;
+  --rivet-mist: #E2E8F0;
+  --rivet-shadow: rgba(15, 42, 77, 0.08);
+  --rivet-green: #16a34a;
+  --rivet-green-light: #dcfce7;
+  --rivet-amber: #d97706;
+  --rivet-amber-light: #fef3c7;
+  --rivet-purple: #7c3aed;
+  --rivet-purple-light: #ede9fe;
+}
+
+* { box-sizing: border-box; }
+
+body, .gradio-container, .gradio-container * {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.gradio-container {
+  background: var(--rivet-cream) !important;
+  color: var(--rivet-ink) !important;
+  max-width: 1040px !important;
+  margin: 0 auto !important;
+  padding: 1.25rem 1.5rem 2.5rem 1.5rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Kill the default Gradio footer chrome */
+footer, .gradio-container footer { display: none !important; }
+
+/* ---------------- Header ---------------- */
+.rivet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.25rem 1.25rem 0.25rem;
+  border-bottom: 1px solid var(--rivet-mist);
+  margin-bottom: 1.75rem;
+}
+.rivet-wordmark {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 600;
+  font-size: 1.75rem;
+  color: var(--rivet-coral);
+  letter-spacing: -0.01em;
+  text-transform: lowercase;
+  line-height: 1;
+}
+.rivet-about {
+  font-size: 0.875rem;
+  color: var(--rivet-ink);
+  opacity: 0.55;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+.rivet-about:hover { opacity: 1; }
+
+/* ---------------- Two-column main layout ---------------- */
+.rivet-main {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .rivet-main { grid-template-columns: 1fr; gap: 1.5rem; }
+}
+
+/* ---------------- Cards / panels ----------------
+   Only elements that explicitly opt into .rivet-card get the white-paper
+   card treatment. Stripping the global .block rule kills the "every
+   gr.HTML in its own card" effect that was littering the home view. */
+.rivet-card {
+  background: white !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 24px var(--rivet-shadow) !important;
+  border: none !important;
+  padding: 2rem 1.75rem !important;
+}
+.gradio-container .gr-panel,
+.gradio-container .block {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* ---------------- Word + IPA display ---------------- */
+.rivet-word {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 5rem;
+  color: var(--rivet-ink);
+  text-align: center;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0 0 0;
+}
+@media (max-width: 768px) { .rivet-word { font-size: 3.5rem; } }
+
+.rivet-ipa {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--rivet-ink);
+  opacity: 0.6;
+  text-align: center;
+  margin: 0.35rem 0 1.75rem 0;
+  letter-spacing: 0.5px;
+}
+
+/* ---------------- Buttons ---------------- */
+.gradio-container button.lg,
+.gradio-container button.primary,
+.gradio-container .gr-button-primary,
+.gradio-container button[data-testid="primary"] {
+  background: var(--rivet-coral) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 1.0625rem !important;
+  padding: 0.9rem 2.25rem !important;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+  box-shadow: 0 2px 8px var(--rivet-shadow) !important;
+}
+.gradio-container button.primary:hover,
+.gradio-container .gr-button-primary:hover {
+  transform: scale(1.02);
+  background: var(--rivet-coral-dark) !important;
+}
+.gradio-container button.secondary,
+.gradio-container .gr-button-secondary {
+  background: var(--rivet-cream) !important;
+  color: var(--rivet-ink) !important;
+  border: 1.5px solid var(--rivet-ink) !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+.gradio-container button:disabled,
+.gradio-container button.primary:disabled,
+.gradio-container .gr-button-primary:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* ---------------- Banner (HF_TOKEN missing) ---------------- */
+.rivet-banner {
+  background: var(--rivet-pink);
+  color: var(--rivet-ink);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.9375rem;
+  margin: 0 0 1.5rem 0;
+}
+
+/* ---------------- Speech bubble under Rho ---------------- */
+.rivet-bubble-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+}
+.rivet-bubble {
+  background: white;
+  color: var(--rivet-ink);
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 18px var(--rivet-shadow);
+  font-family: 'Fraunces', serif;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  position: relative;
+  margin: 1rem auto 0;
+  max-width: 320px;
+  font-style: italic;
+  min-height: 2rem;
+  transition: opacity 0.3s ease;
+}
+.rivet-bubble::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 12px solid white;
+}
+.rivet-bubble.hidden { opacity: 0; pointer-events: none; }
+
+/* "Ready for next word" badge */
+.rivet-ready-badge {
+  background: var(--rivet-coral);
+  color: white;
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0.75rem auto 0;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  text-align: center;
+  max-width: 320px;
+  animation: rivet-ready-pulse 2s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+.rivet-ready-badge.hidden {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}
+.rivet-ready-badge strong { font-weight: 700; }
+
+@keyframes rivet-ready-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rivet-ready-badge { animation: none; }
+}
+
+.rivet-character-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+/* ---------------- Transcript ---------------- */
+.rivet-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 0.25rem;
+  margin-top: 1rem;
+}
+.rivet-transcript:empty::before {
+  content: 'Your practice turns will appear here.';
+  display: block;
+  color: var(--rivet-ink);
+  opacity: 0.4;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 2rem 0;
+}
+.rivet-transcript::-webkit-scrollbar { width: 6px; }
+.rivet-transcript::-webkit-scrollbar-thumb {
+  background: var(--rivet-mist);
+  border-radius: 3px;
+}
+.rivet-transcript::-webkit-scrollbar-track { background: transparent; }
+
+.rivet-turn {
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.rivet-turn.user {
+  background: var(--rivet-cream);
+  border: 1px solid var(--rivet-mist);
+}
+.rivet-turn.wren { background: var(--rivet-pink); }
+.rivet-turn .turn-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  line-height: 1.45;
+}
+.rivet-turn .turn-content { color: var(--rivet-ink); flex: 1; }
+.rivet-turn.user .turn-content {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+}
+.rivet-turn .turn-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.rivet-turn .turn-dot.correct   { background: var(--rivet-butter); border: 1px solid #d9c280; }
+.rivet-turn .turn-dot.incorrect { background: var(--rivet-coral); }
+.rivet-turn .turn-dot.unclear   { background: var(--rivet-mist); border: 1px solid #ccd2d4; }
+
+/* ---------------- Audio player styling ---------------- */
+.gradio-container .audio-container {
+  background: var(--rivet-cream) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--rivet-mist) !important;
+}
+
+/* ---------------- Footer ---------------- */
+.rivet-footer {
+  text-align: center;
+  color: var(--rivet-ink);
+  opacity: 0.5;
+  font-size: 0.8125rem;
+  padding-top: 1.5rem;
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--rivet-mist);
+}
+
+/* ---------------- Modal (about) ---------------- */
+.rivet-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(27, 58, 75, 0.4);
+  z-index: 9999;
+  display: none;
+  align-items: center; justify-content: center;
+}
+.rivet-modal-backdrop.open { display: flex; }
+.rivet-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 460px;
+  width: 90%;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+}
+.rivet-modal h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  color: var(--rivet-coral);
+  margin: 0 0 0.5rem 0;
+}
+.rivet-modal p {
+  color: var(--rivet-ink);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0.5rem 0;
+}
+.rivet-modal-close {
+  margin-top: 1rem;
+  background: var(--rivet-coral);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------------- Accessibility ---------------- */
+.gradio-container button:focus-visible,
+.gradio-container input:focus-visible,
+.gradio-container a:focus-visible,
+.gradio-container [role="button"]:focus-visible {
+  outline: 2px solid var(--rivet-coral) !important;
+  outline-offset: 2px;
+}
+
+/* ---------------- Hide state bridges visually ---------------- */
+#rivet-state-bridge, #rivet-correct-bridge { display: none !important; }
+
+/* ---------------- Tighten internal Gradio spacing ---------------- */
+.gradio-container .block .label { font-weight: 500; color: var(--rivet-ink); opacity: 0.7; }
+.gradio-container .gap, .gradio-container .row, .gradio-container .column { gap: 0.75rem; }
+
+/* ================================================================
+   CURRICULUM PROGRESS BAR
+   ================================================================ */
+#rivet-progress-wrap {
+  margin: 0 0 1.5rem 0;
+}
+.rivet-progress-bar {
+  background: var(--rivet-pink);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rivet-level-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.rivet-level-label {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--rivet-coral);
+}
+.rivet-desc {
+  font-size: 0.875rem;
+  color: var(--rivet-ink);
+  opacity: 0.65;
+}
+.rivet-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.rivet-xp {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--rivet-ink);
+}
+.rivet-streak {
+  background: var(--rivet-amber-light);
+  color: var(--rivet-amber);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+.rivet-progress-track {
+  background: rgba(15, 42, 77, 0.1);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.rivet-progress-fill {
+  height: 100%;
+  background: var(--rivet-coral);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.rivet-progress-label {
+  font-size: 0.75rem;
+  color: var(--rivet-ink);
+  opacity: 0.55;
+}
+
+/* ================================================================
+   LEVEL-UP NOTIFICATION
+   ================================================================ */
+#rivet-levelup-wrap:empty { display: none; }
+.rivet-levelup {
+  background: linear-gradient(135deg, #2563EB 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+  margin: 0 0 1.25rem 0;
+  animation: rivet-levelup-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes rivet-levelup-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.rivet-levelup-icon { font-size: 1.75rem; }
+.rivet-levelup-text { font-weight: 700; font-size: 1.0625rem; }
+.rivet-levelup-desc { font-size: 0.875rem; opacity: 0.85; }
+
+/* ================================================================
+   EXERCISE TYPE BADGES
+   ================================================================ */
+.rivet-word-wrap { text-align: center; }
+.rivet-ex-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  margin: 0.75rem 0 0.25rem 0;
+}
+.rivet-ex-badge.syllable {
+  background: var(--rivet-green-light);
+  color: var(--rivet-green);
+}
+.rivet-ex-badge.word {
+  background: var(--rivet-pink);
+  color: var(--rivet-coral);
+}
+.rivet-ex-badge.phrase {
+  background: var(--rivet-purple-light);
+  color: var(--rivet-purple);
+}
+
+/* ================================================================
+   BUTTON ROW ("Hear it" + "Next →")
+   ================================================================ */
+.rivet-btn-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.rivet-btn-row > div,
+.rivet-btn-row > button { flex: 1; }
+
+/* Hear-it button secondary style */
+#hear-btn {
+  background: var(--rivet-cream) !important;
+  color: var(--rivet-coral) !important;
+  border: 1.5px solid var(--rivet-coral) !important;
+  font-weight: 600 !important;
+}
+#hear-btn:hover {
+  background: var(--rivet-pink) !important;
+}
+
+/* ================================================================
+   APPROACHING / SUCCESS state indicators in transcript
+   ================================================================ */
+.rivet-turn .turn-dot.approaching {
+  background: var(--rivet-amber-light);
+  border: 1px solid var(--rivet-amber);
+}
+
+/* ================================================================
+   HOME VIEW — paper-card style matching the practice area
+   ================================================================ */
+
+/* Header row keeps the wordmark + login button on one line */
+.rivet-header-row {
+  max-width: 940px;
+  margin: 0 auto 1.5rem auto;
+  align-items: center;
+  gap: 1rem;
+}
+.rivet-header-row > div:first-child { flex: 1; }
+.rivet-login-btn { flex: 0 0 auto !important; max-width: 200px; }
+.rivet-local-badge {
+  flex: 0 0 auto;
+  background: var(--rivet-pink);
+  color: var(--rivet-coral);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.95rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  align-self: center;
+}
+.gradio-container .rivet-login-btn button,
+.gradio-container .rivet-login-btn button.primary,
+.gradio-container .rivet-login-btn .gr-button-primary {
+  background: var(--rivet-ink) !important;
+  color: white !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+  padding: 0.45rem 1rem !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+.gradio-container .rivet-login-btn button:hover {
+  background: var(--rivet-coral) !important;
+  transform: none !important;
+}
+
+/* Constrain the home and practice views so nothing stretches.
+   Home is wider so the 5-up level module grid breathes; practice
+   stays narrower to keep the word + coach focused. */
+.rivet-home {
+  max-width: 940px;
+  margin: 0 auto;
+}
+.rivet-practice {
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+/* ── Welcome card — clean white paper, no gradient ── */
+.rivet-welcome-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px var(--rivet-shadow);
+  padding: 2.5rem 2rem 2.25rem 2rem;
+  margin: 0 auto 1rem auto;
+  text-align: center;
+  border: none;
+  max-width: 680px;
+}
+.rivet-welcome-eyebrow {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rivet-coral);
+  margin-bottom: 0.5rem;
+}
+.rivet-welcome-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 2.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--rivet-ink);
+  margin-bottom: 0.6rem;
+}
+@media (max-width: 560px) {
+  .rivet-welcome-name { font-size: 2rem; }
+}
+.rivet-welcome-hint {
+  font-size: 0.95rem;
+  color: var(--rivet-ink);
+  opacity: 0.6;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+/* ── Resume card — same white paper, no dark theme ── */
+#rivet-resume-wrap:empty { display: none; }
+.rivet-resume-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px var(--rivet-shadow);
+  padding: 1.25rem 1.5rem;
+  margin: 0 auto 0.75rem auto;
+  border: none;
+  max-width: 680px;
+}
+.rivet-resume-label {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rivet-coral);
+  margin-bottom: 0.55rem;
+}
+.rivet-resume-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.rivet-resume-level {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--rivet-ink);
+  margin-right: 0.25rem;
+}
+.rivet-resume-chip {
+  background: var(--rivet-pink);
+  color: var(--rivet-coral);
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.rivet-resume-btn {
+  margin: 0 auto 1.5rem auto !important;
+  max-width: 680px !important;
+  width: 100% !important;
+}
+.rivet-resume-btn button {
+  width: 100% !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  padding: 0.85rem 1.5rem !important;
+}
+
+/* ── "Choose a level" title ── */
+.rivet-pick-title {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rivet-ink);
+  opacity: 0.55;
+  margin: 1.5rem 0 1rem 0;
+  text-align: center;
+}
+
+/* ── 5-up level module grid ──
+   Each module is a clickable card: graphic on top, name underneath.
+   The graphic is set per-card via the `--level-img` CSS variable,
+   injected from app.py with the Gradio-resolved asset URL. */
+.rivet-level-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: 270px;
+  align-items: start;
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+/* Force every direct child (the wrapper Gradio puts around each Button)
+   to the row height. Without this, the default grid stretch + Gradio's
+   internal flex wrappers push the buttons up to ~580px tall. */
+.rivet-level-grid > * {
+  min-width: 0 !important;
+  height: 270px !important;
+  max-height: 270px !important;
+  align-self: start !important;
+}
+.rivet-level-grid > * > * {
+  height: 100% !important;
+}
+.rivet-level-btn { width: 100% !important; height: 270px !important; }
+
+/* Level module styling lives in an inline <style> injected from app.py
+   (right next to the buttons). That keeps it co-located with the per-
+   card image URLs and guarantees it ships AFTER any bundled Gradio CSS
+   so we don't lose to specificity / SSR weirdness. See `_level_img_css`
+   in app.py. */
+
+/* ── Back-to-home button ── */
+.rivet-practice-top {
+  margin: 0 0 0.75rem 0;
+}
+.rivet-back-btn { max-width: 140px; }
+.rivet-back-btn button {
+  background: white !important;
+  border: 1px solid var(--rivet-mist) !important;
+  color: var(--rivet-ink) !important;
+  font-weight: 600 !important;
+  border-radius: 999px !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.9rem !important;
+}
+.rivet-back-btn button:hover {
+  border-color: var(--rivet-coral) !important;
+  background: var(--rivet-pink) !important;
+}
+
+/* ── Responsive layouts ── */
+@media (max-width: 720px) {
+  .rivet-level-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .rivet-level-grid { grid-template-columns: 1fr; }
+}

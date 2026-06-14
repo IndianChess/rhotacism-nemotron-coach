@@ -1,4 +1,4 @@
-"""Rivet R Coach — /r/ practice app with guided curriculum progression.
+"""Rhotic R Coach — /r/ practice app with guided curriculum progression.
 
 Architecture overview
 ─────────────────────
@@ -24,8 +24,10 @@ Dataset on every attempt and every back-to-home transition.
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
+import random
 import time
 
 from dotenv import load_dotenv
@@ -66,8 +68,20 @@ from scoring import score_pronunciation
 from words import (
     get_next_word,
     LEVEL_LABELS, LEVEL_DESCRIPTIONS,
+    LEVEL_UNLOCK_XP, level_unlocked,
     XP_PER_CORRECT, XP_FIRST_TRY_BONUS, ADVANCE_AFTER_CORRECT,
 )
+from twisters import todays_twister
+
+
+# Short labels for the path nodes — drop the "Level N · " prefix from LEVEL_LABELS
+LEVEL_SHORT_LABELS = {
+    0: "Syllables",
+    1: "Starting Words",
+    2: "Middle &amp; End",
+    3: "Blends &amp; Vocalic",
+    4: "Phrases",
+}
 
 
 # Plain-text version of level labels, for TTS (drops the "·" character).
@@ -81,7 +95,7 @@ LEVEL_LABELS_TTS = {
 
 HF_TOKEN_PRESENT = bool(os.environ.get("HF_TOKEN"))
 DISCLAIMER = (
-    "Rivet R Coach is a practice tool, not a substitute for a licensed "
+    "Rhotic R Coach is a practice tool, not a substitute for a licensed "
     "Speech-Language Pathologist."
 )
 
@@ -104,11 +118,15 @@ CELEBRATION_URLS = [
 
 with open(os.path.join(HERE, "theme.css")) as f:
     CUSTOM_CSS = f.read()
+BLOB_IDLE_URL      = _asset_url("blob.svg")
+BLOB_THINKING_URL  = _asset_url("blob-thinking.svg")
+BLOB_CELEBRATE_URL = _asset_url("blob-celebrate.svg")
+
 with open(os.path.join(HERE, "character.html")) as f:
     CHARACTER_HTML = (
         f.read()
-        .replace("{{IDLE_URL}}", _asset_url("idle.webm"))
-        .replace("{{CELEBRATIONS_JSON}}", json.dumps(CELEBRATION_URLS))
+        .replace("{{BLOB_URL}}", BLOB_IDLE_URL)
+        .replace("{{BLOB_THINKING_URL}}", BLOB_THINKING_URL)
     )
 
 # What counts as a "correct" attempt for XP, streaks, and level-up.
@@ -155,22 +173,22 @@ THEME = gr.themes.Base(
 
 def _word_html(word: str, ex_type: str = "word") -> str:
     type_badge = {
-        "syllable": "<span class='rivet-ex-badge syllable'>syllable drill</span>",
-        "phrase":   "<span class='rivet-ex-badge phrase'>phrase</span>",
-        "word":     "<span class='rivet-ex-badge word'>word</span>",
+        "syllable": "<span class='rhotic-ex-badge syllable'>syllable drill</span>",
+        "phrase":   "<span class='rhotic-ex-badge phrase'>phrase</span>",
+        "word":     "<span class='rhotic-ex-badge word'>word</span>",
     }.get(ex_type, "")
-    return f"<div class='rivet-word-wrap'>{type_badge}<div class='rivet-word'>{word}</div></div>"
+    return f"<div class='rhotic-word-wrap'>{type_badge}<div class='rhotic-word'>{word}</div></div>"
 
 
 def _ipa_html(phonemes: str) -> str:
-    return f"<div class='rivet-ipa'>/{phonemes}/</div>"
+    return f"<div class='rhotic-ipa'>/{phonemes}/</div>"
 
 
 def _level_bar_html(level: int, xp: int, streak: int) -> str:
     label = LEVEL_LABELS.get(level, f"Level {level + 1}")
     desc  = LEVEL_DESCRIPTIONS.get(level, "")
     streak_badge = (
-        f"<span class='rivet-streak'>🔥 {streak} in a row</span>"
+        f"<span class='rhotic-streak'>🔥 {streak} in a row</span>"
         if streak >= 2 else ""
     )
 
@@ -185,19 +203,19 @@ def _level_bar_html(level: int, xp: int, streak: int) -> str:
         progress_label = f"{streak}/{ADVANCE_AFTER_CORRECT} correct to level up"
 
     return (
-        f"<div class='rivet-progress-bar'>"
-        f"  <div class='rivet-level-info'>"
-        f"    <span class='rivet-level-label'>{label}</span>"
-        f"    <span class='rivet-desc'>{desc}</span>"
+        f"<div class='rhotic-progress-bar'>"
+        f"  <div class='rhotic-level-info'>"
+        f"    <span class='rhotic-level-label'>{label}</span>"
+        f"    <span class='rhotic-desc'>{desc}</span>"
         f"  </div>"
-        f"  <div class='rivet-xp-row'>"
-        f"    <div class='rivet-xp'>💫 {xp} XP</div>"
+        f"  <div class='rhotic-xp-row'>"
+        f"    <div class='rhotic-xp'>💫 {xp} XP</div>"
         f"    {streak_badge}"
         f"  </div>"
-        f"  <div class='rivet-progress-track'>"
-        f"    <div class='rivet-progress-fill' style='width:{progress_pct}%'></div>"
+        f"  <div class='rhotic-progress-track'>"
+        f"    <div class='rhotic-progress-fill' style='width:{progress_pct}%'></div>"
         f"  </div>"
-        f"  <div class='rivet-progress-label'>{progress_label}</div>"
+        f"  <div class='rhotic-progress-label'>{progress_label}</div>"
         f"</div>"
     )
 
@@ -206,10 +224,10 @@ def _levelup_html(new_level: int) -> str:
     label = LEVEL_LABELS.get(new_level, f"Level {new_level + 1}")
     desc  = LEVEL_DESCRIPTIONS.get(new_level, "")
     return (
-        f"<div class='rivet-levelup'>"
-        f"  <div class='rivet-levelup-icon'>⬆️</div>"
-        f"  <div class='rivet-levelup-text'>Level up! Now: <strong>{label}</strong></div>"
-        f"  <div class='rivet-levelup-desc'>{desc}</div>"
+        f"<div class='rhotic-levelup'>"
+        f"  <div class='rhotic-levelup-icon'>⬆️</div>"
+        f"  <div class='rhotic-levelup-text'>Level up! Now: <strong>{label}</strong></div>"
+        f"  <div class='rhotic-levelup-desc'>{desc}</div>"
         f"</div>"
     )
 
@@ -218,18 +236,180 @@ def _welcome_html(profile_username: str | None, profile_name: str | None) -> str
     if profile_username:
         display = profile_name or profile_username
         return (
-            f"<div class='rivet-welcome-card'>"
-            f"  <div class='rivet-welcome-eyebrow'>Welcome back</div>"
-            f"  <div class='rivet-welcome-name'>{display}</div>"
-            f"  <div class='rivet-welcome-hint'>Your progress saves automatically.</div>"
+            f"<div class='rhotic-welcome-card'>"
+            f"  <div class='rhotic-welcome-eyebrow'>Welcome back</div>"
+            f"  <div class='rhotic-welcome-name'>{display}</div>"
+            f"  <div class='rhotic-welcome-hint'>Your progress saves automatically.</div>"
             f"</div>"
         )
     return (
-        f"<div class='rivet-welcome-card'>"
-        f"  <div class='rivet-welcome-eyebrow'>Welcome</div>"
-        f"  <div class='rivet-welcome-name'>Practice the /r/ sound</div>"
-        f"  <div class='rivet-welcome-hint'>Sign in with Hugging Face to save progress across sessions.</div>"
+        f"<div class='rhotic-welcome-card'>"
+        f"  <div class='rhotic-welcome-eyebrow'>Welcome</div>"
+        f"  <div class='rhotic-welcome-name'>Practice the /r/ sound</div>"
+        f"  <div class='rhotic-welcome-hint'>Sign in with Hugging Face to save progress across sessions.</div>"
         f"</div>"
+    )
+
+
+def _path_html(level: int, xp: int) -> str:
+    """Render the winding 5-node level-picker path.
+
+    `level` = the user's current/last-played level.
+    `xp`    = accumulated XP across all sessions.
+
+    Each node lands in one of four states:
+      done    — n < level (user has moved past it)
+      current — n == level
+      open    — n > level and unlocked by XP
+      locked  — XP < LEVEL_UNLOCK_XP[n]
+    """
+    # Zigzag offset in px applied via inline transform.
+    OFFSETS = [-130, 0, 130, 0, -130]
+    nodes = []
+    for n in range(5):
+        label    = LEVEL_SHORT_LABELS.get(n, f"Level {n + 1}")
+        threshold = LEVEL_UNLOCK_XP.get(n, 0)
+        unlocked = level_unlocked(n, xp)
+        if not unlocked:
+            state, icon, sub = "locked", "🔒", f"{threshold} XP to unlock"
+        elif n == level:
+            state, icon, sub = "current", "★", "You are here"
+        elif n < level:
+            state, icon, sub = "done", "✓", "Completed"
+        else:
+            state, icon, sub = "open", "●", "Practice"
+
+        # We attach click behavior via a delegated listener (see demo.load js
+        # below) instead of inline onclick — Gradio sanitizes inline handlers
+        # off of dynamic gr.HTML updates, so onclick="..." silently disappears
+        # the second time the path renders.
+        nodes.append(
+            f"<div class='rhotic-path-node {state}' "
+            f"data-level='{n}' data-unlocked='{1 if unlocked else 0}' "
+            f"style='transform: translateX({OFFSETS[n]}px)'>"
+            f"  <div class='rhotic-node-circle'>{icon}</div>"
+            f"  <div class='rhotic-node-label'>{label}</div>"
+            f"  <div class='rhotic-node-sub'>{sub}</div>"
+            f"</div>"
+        )
+    banner = (
+        f"<div class='rhotic-path-banner'>"
+        f"  <span class='chip'>💫 {xp} XP</span>"
+        f"</div>"
+    )
+    return banner + f"<div class='rhotic-path'>{''.join(nodes)}</div>"
+
+
+_SVG_OPEN  = ("<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' "
+              "stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>")
+_SVG_CLOSE = "</svg>"
+TAB_ICONS = {
+    # Home / Learn
+    "learn":   _SVG_OPEN + "<path d='M3 11 L12 3 L21 11'/>"
+                            "<path d='M5 10v10h14V10'/>"
+                            "<path d='M10 20v-6h4v6'/>" + _SVG_CLOSE,
+    # Spiral (tongue twister)
+    "twister": _SVG_OPEN + "<path d='M12 21a9 9 0 1 0-9-9'/>"
+                            "<path d='M12 18a6 6 0 1 0-6-6'/>"
+                            "<path d='M12 15a3 3 0 1 0-3-3'/>" + _SVG_CLOSE,
+    # Person / Profile
+    "profile": _SVG_OPEN + "<circle cx='12' cy='8' r='4'/>"
+                            "<path d='M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6'/>" + _SVG_CLOSE,
+}
+
+
+def _sidebar_html(view: str) -> str:
+    """Render the left sidebar with the active tab highlighted.
+
+    `view` is the current view_state. When the user is in the practice
+    flow we still mark "Learn" as active in the sidebar, since practice
+    is reached from a Learn-tab path node.
+    """
+    active = "learn" if view in ("learn", "practice") else view
+    tabs = [("learn", "Learn"), ("twister", "Twister"), ("profile", "Profile")]
+    items = []
+    for key, label in tabs:
+        cls = "rhotic-tab active" if active == key else "rhotic-tab"
+        icon = TAB_ICONS.get(key, "")
+        items.append(
+            f"<div class='{cls}' data-tab='{key}'>"
+            f"  <span class='rhotic-tab-icon'>{icon}</span>"
+            f"  <span class='rhotic-tab-label'>{label}</span>"
+            f"</div>"
+        )
+    return (
+        "<div class='rhotic-wordmark'>rhotic</div>"
+        f"<nav>{''.join(items)}</nav>"
+        "<div class='rhotic-side-footer'>"
+        "  <button class='rhotic-about-link' "
+        "          onclick=\"window.openRhoticAbout()\">About</button>"
+        "</div>"
+    )
+
+
+def _twister_card_html(twister: dict) -> str:
+    """Render the daily Twister hero card."""
+    today_str = datetime.date.today().strftime("%A, %B %d")
+    return (
+        "<div class='rhotic-twister-card'>"
+        "  <div class='rhotic-twister-eyebrow'>Today's Tongue Twister</div>"
+        f" <div class='rhotic-twister-text'>{twister['text']}</div>"
+        f" <div class='rhotic-twister-meta'>{today_str} · /r/ challenge</div>"
+        "</div>"
+    )
+
+
+def _profile_html(profile, level: int, xp: int,
+                  streak: int, best_streak: int, history: list) -> str:
+    """Render the Profile tab.
+
+    Signed out → sign-in CTA card. Signed in → name + stats + badges.
+    The HF LoginButton itself lives below this HTML inside the Profile
+    column (Gradio component), so this card just provides framing copy.
+    """
+    if not profile or not getattr(profile, "username", None):
+        return (
+            "<div class='rhotic-profile-card rhotic-profile-empty'>"
+            "  <h2>Save your /r/ journey</h2>"
+            "  <p>Sign in with Hugging Face to save XP, streaks, and the "
+            "     levels you've completed across sessions.</p>"
+            "</div>"
+        )
+
+    name    = getattr(profile, "name", None) or profile.username
+    initial = (name or "?")[0].upper()
+    attempts = len(history or [])
+    badges = []
+    for n in range(5):
+        earned = level > n
+        label = LEVEL_SHORT_LABELS.get(n, f"Lv {n+1}")
+        icon  = "🏆" if earned else "🔒"
+        cls   = "rhotic-badge earned" if earned else "rhotic-badge"
+        badges.append(
+            f"<div class='{cls}'>"
+            f"  <span class='icon'>{icon}</span>{label}"
+            f"</div>"
+        )
+    return (
+        "<div class='rhotic-profile-card'>"
+        "  <div class='rhotic-profile-header'>"
+        f"   <div class='rhotic-profile-avatar'>{initial}</div>"
+        "    <div>"
+        f"     <div class='rhotic-profile-name'>{name}</div>"
+        f"     <div class='rhotic-profile-handle'>@{profile.username}</div>"
+        "    </div>"
+        "  </div>"
+        "  <div class='rhotic-stats-grid'>"
+        f"   <div class='rhotic-stat'><div class='val'>{xp}</div>"
+        "        <div class='lbl'>XP</div></div>"
+        f"   <div class='rhotic-stat'><div class='val'>{best_streak}</div>"
+        "        <div class='lbl'>Best streak</div></div>"
+        f"   <div class='rhotic-stat'><div class='val'>{attempts}</div>"
+        "        <div class='lbl'>Attempts</div></div>"
+        "  </div>"
+        "  <div class='rhotic-badges-title'>Levels achieved</div>"
+        f"  <div class='rhotic-badges'>{''.join(badges)}</div>"
+        "</div>"
     )
 
 
@@ -241,12 +421,12 @@ def _resume_card_html(progress: dict) -> str:
     streak = int(progress.get("streak", 0))
     label = LEVEL_LABELS.get(level, f"Level {level + 1}")
     return (
-        f"<div class='rivet-resume-card'>"
-        f"  <div class='rivet-resume-label'>Continue your practice</div>"
-        f"  <div class='rivet-resume-stats'>"
-        f"    <span class='rivet-resume-level'>{label}</span>"
-        f"    <span class='rivet-resume-chip'>💫 {xp} XP</span>"
-        f"    <span class='rivet-resume-chip'>🔥 {streak} streak</span>"
+        f"<div class='rhotic-resume-card'>"
+        f"  <div class='rhotic-resume-label'>Continue your practice</div>"
+        f"  <div class='rhotic-resume-stats'>"
+        f"    <span class='rhotic-resume-level'>{label}</span>"
+        f"    <span class='rhotic-resume-chip'>💫 {xp} XP</span>"
+        f"    <span class='rhotic-resume-chip'>🔥 {streak} streak</span>"
         f"  </div>"
         f"</div>"
     )
@@ -312,17 +492,24 @@ def on_app_load(profile: gr.OAuthProfile | None):
     saved_best   = int(progress.get("best_streak", saved_streak))
     saved_hist   = list(progress.get("history", []))
     return (
-        # view-state machinery
-        "home",                                # view_state
-        gr.update(visible=True),               # home_view
-        gr.update(visible=False),              # practice_view
-        # home UI
-        welcome_html,                          # welcome_display
-        resume_html,                           # resume_display
-        gr.update(visible=has_resume),         # resume_btn
+        # view-state machinery — boot into Learn (the path)
+        "learn",                                  # view_state
+        gr.update(visible=True),                  # learn_view (home_view)
+        gr.update(visible=False),                 # twister_view
+        gr.update(visible=False),                 # profile_view
+        gr.update(visible=False),                 # practice_view
+        _sidebar_html("learn"),                   # sidebar_display
+        # learn-tab UI
+        welcome_html,                             # welcome_display
+        resume_html,                              # resume_display
+        gr.update(visible=has_resume),            # resume_btn
+        _path_html(saved_level, saved_xp),        # path_display
+        # profile tab pre-rendered so it's ready when the user clicks
+        _profile_html(profile, saved_level, saved_xp,
+                      saved_streak, saved_best, saved_hist),  # profile_display
         # restored state for resume
         saved_level, saved_xp, saved_streak, saved_best, saved_hist,
-        # username we remember through the session
+        # username remembered through the session
         username or "",
     )
 
@@ -334,8 +521,11 @@ def _start_session(level: int, history: list, xp: int, streak: int, best_streak:
     return (
         # view-state
         "practice",
-        gr.update(visible=False),              # home_view
+        gr.update(visible=False),              # learn_view
+        gr.update(visible=False),              # twister_view
+        gr.update(visible=False),              # profile_view
         gr.update(visible=True),               # practice_view
+        _sidebar_html("practice"),             # sidebar (Learn stays highlighted)
         # practice state
         first,                                 # word_state
         history,                               # history_state
@@ -376,14 +566,25 @@ def _load_session_state(profile: gr.OAuthProfile | None) -> dict:
     }
 
 
-def on_pick_level(level: int, profile: gr.OAuthProfile | None):
-    """User tapped one of the five level buttons. Keep accumulated XP,
-    best_streak, and history — just jump to the chosen level."""
+def on_pick_level(level: int, current_xp: int,
+                  profile: gr.OAuthProfile | None):
+    """User tapped a path node. Keep accumulated XP, best_streak, and
+    history — just jump to the chosen level.
+
+    `current_xp` is the live xp_state value, which may have been bumped
+    by the demo dev panel beyond what's persisted in the dataset. We
+    take whichever is larger for the unlock check + the session bootstrap.
+    """
     saved = _load_session_state(profile)
+    effective_xp = max(int(current_xp or 0), int(saved["xp"]))
+    if not level_unlocked(level, effective_xp):
+        # Locked. No state change — stay on the current view. Returns one
+        # gr.update() per output slot in start_session_outputs (23).
+        return tuple(gr.update() for _ in range(23))
     return _start_session(
         level=level,
         history=saved["history"],
-        xp=saved["xp"],
+        xp=effective_xp,
         streak=saved["streak"],
         best_streak=saved["best_streak"],
     )
@@ -417,11 +618,15 @@ def on_back_home(username: str, level: int, xp: int, streak: int,
         "streak":     streak,
     }) if effective_username else ""
     return (
-        "home",
-        gr.update(visible=True),               # home_view
+        "learn",
+        gr.update(visible=True),               # learn_view
+        gr.update(visible=False),              # twister_view
+        gr.update(visible=False),              # profile_view
         gr.update(visible=False),              # practice_view
+        _sidebar_html("learn"),                # sidebar
         resume_html,                           # resume_display
         gr.update(visible=bool(resume_html)),  # resume_btn
+        _path_html(level, xp),                 # path_display
     )
 
 
@@ -443,7 +648,7 @@ def on_submit(audio_path, current_word, history, messages,
     if not current_word or not audio_path:
         return (current_word, history, messages, level, xp, streak, best_streak,
                 gr.update(), gr.update(), gr.update(), gr.update(), gr.update(),
-                gr.update(), gr.update())
+                gr.update(), gr.update(), gr.update())
 
     word = current_word["word"]
     target_phonemes = current_word["phonemes"]
@@ -458,7 +663,7 @@ def on_submit(audio_path, current_word, history, messages,
         new_msgs = messages + [_wren_msg(err)]
         return (current_word, history, new_msgs, level, xp, streak, best_streak,
                 (sr, audio), new_msgs, err, "false", "false",
-                _level_bar_html(level, xp, streak), gr.update())
+                _level_bar_html(level, xp, streak), gr.update(), gr.update())
 
     print(
         f"[score] word={word!r} type={ex_type} "
@@ -476,6 +681,12 @@ def on_submit(audio_path, current_word, history, messages,
     reply = coach_result["spoken_reply"]
     high_score = _is_attempt_correct(score)
     is_correct = high_score or bool(coach_result.get("is_correct"))
+
+    # Natural "thinking" pause so the blob's thinking pose has time to
+    # show before Wren speaks. The Gradio audio chain set the state to
+    # "thinking" via _lock before this handler ran — sleeping here keeps
+    # that state visible for the user.
+    time.sleep(random.uniform(2.0, 4.0))
 
     is_first_try = not any(h.get("target_word") == word for h in history)
     new_xp = xp
@@ -523,6 +734,10 @@ def on_submit(audio_path, current_word, history, messages,
     if effective_username:
         _persist(effective_username, new_level, new_xp, new_streak, new_best, new_history)
 
+    # Each correct answer gets a unique celebrate-token so the JS watcher
+    # sees a change every time (and re-fires the confetti).
+    celebrate_value = f"go-{time.time()}" if high_score else ""
+
     return (
         current_word,
         new_history,
@@ -538,6 +753,7 @@ def on_submit(audio_path, current_word, history, messages,
         "true" if high_score else "false",        # ready bridge
         _level_bar_html(new_level, new_xp, new_streak),
         levelup_notif,
+        celebrate_value,                          # celebrate bridge
     )
 
 
@@ -565,11 +781,12 @@ def on_next(history, messages, level, xp, streak, best_streak):
 # ---------------------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------------------
-with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
+with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
 
     # ---- Persistent state ----
-    view_state           = gr.State("home")
+    view_state           = gr.State("learn")
     word_state           = gr.State()
+    twister_state        = gr.State()   # today's twister dict, populated lazily
     history_state        = gr.State([])
     transcript_state     = gr.State([])
     level_state          = gr.State(0)
@@ -579,255 +796,327 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
     remembered_user_state = gr.State("")
 
     # ---- Hidden JS bridges ----
-    state_bridge   = gr.Textbox(value="idle",                          visible=False, elem_id="rivet-state-bridge")
-    bubble_bridge  = gr.Textbox(value="Just a sec — getting ready...", visible=False, elem_id="rivet-bubble-bridge")
-    correct_bridge = gr.Textbox(value="false",                         visible=False, elem_id="rivet-correct-bridge")
-    ready_bridge   = gr.Textbox(value="false",                         visible=False, elem_id="rivet-ready-bridge")
+    # Gradio 5 fully unmounts `visible=False` components — they vanish
+    # from the DOM, so JS can't read their value. Instead we keep them
+    # mounted with `visible=True` and hide them via CSS (off-screen).
+    state_bridge     = gr.Textbox(value="idle",  elem_id="rhotic-state-bridge",
+                                  show_label=False,
+                                  elem_classes=["rhotic-bridge-hidden"])
+    bubble_bridge    = gr.Textbox(value="",      elem_id="rhotic-bubble-bridge",
+                                  show_label=False,
+                                  elem_classes=["rhotic-bridge-hidden"])
+    correct_bridge   = gr.Textbox(value="false", elem_id="rhotic-correct-bridge",
+                                  show_label=False,
+                                  elem_classes=["rhotic-bridge-hidden"])
+    ready_bridge     = gr.Textbox(value="false", elem_id="rhotic-ready-bridge",
+                                  show_label=False,
+                                  elem_classes=["rhotic-bridge-hidden"])
+    celebrate_bridge = gr.Textbox(value="",      elem_id="rhotic-celebrate-bridge",
+                                  show_label=False,
+                                  elem_classes=["rhotic-bridge-hidden"])
 
-    # ---- Header ----
+    # ---- Celebration modal (fixed-position overlay) ----
+    # Triggered when the user gets an answer right or presses Shift+S.
+    # Press Enter to dismiss. JS lives in the demo.load js hook.
+    gr.HTML(
+        f"<div id='rhotic-celebrate-modal' role='dialog' aria-modal='true'>"
+        f"  <div class='rhotic-confetti'></div>"
+        f"  <div class='rhotic-celebrate-text'>"
+        f"    <div class='rhotic-celebrate-title'>Nice work!</div>"
+        f"    <div class='rhotic-celebrate-hint'>Press Enter to continue</div>"
+        f"  </div>"
+        f"  <img class='rhotic-celebrate-blob' "
+        f"       src='{BLOB_CELEBRATE_URL}' alt='Celebration'>"
+        f"</div>"
+    )
+
+    # ---- About modal (fixed-position overlay, sits at root of the page) ----
+    gr.HTML(
+        "<div id='rhotic-about-modal' class='rhotic-modal-backdrop' role='dialog' aria-modal='true'>"
+        "  <div class='rhotic-modal'>"
+        "    <h2>About rhotic</h2>"
+        f"   <p>{DISCLAIMER}</p>"
+        "    <p>Phoneme scoring: wav2vec2 (facebook/wav2vec2-lv-60-espeak-cv-ft) + "
+        "       Praat formant analysis with CTC-guided /r/ segment isolation.<br>"
+        "       Coaching: SLP-informed feedback library matched to the live scoring signal.<br>"
+        "       Voice: Kyutai pocket-tts.</p>"
+        "    <p>Sign in with Hugging Face to save your progress across sessions.</p>"
+        "    <p>Built for the Build Small Hackathon, June 2026.</p>"
+        "    <button class='rhotic-modal-close' onclick=\"window.closeRhoticAbout()\">Close</button>"
+        "  </div>"
+        "</div>"
+    )
+
     # gr.LoginButton requires either a real Space environment or a local
     # HF_TOKEN to bootstrap its mock OAuth handler. When running locally
     # without a token, we replace it with a static badge so the app still
     # boots — OAuth-gated features (progress sync) just stay session-only.
     _running_on_space = bool(os.environ.get("SPACE_ID"))
     _has_hf_token     = bool(os.environ.get("HF_TOKEN", "").strip())
-    with gr.Row(elem_classes=["rivet-header-row"]):
-        gr.HTML(
-            "<div class='rivet-header'>"
-            "  <span class='rivet-wordmark'>rivet</span>"
-            "  <button class='rivet-about' onclick=\"window.openRivetAbout()\" "
-            "    aria-label='About Rivet R Coach'>About</button>"
-            "</div>"
-        )
-        if _running_on_space or _has_hf_token:
-            login_btn = gr.LoginButton(
-                value="Sign in with Hugging Face",
-                elem_classes=["rivet-login-btn"],
-            )
-        else:
-            gr.HTML(
-                "<div class='rivet-local-badge' title='Running locally — "
-                "set HF_TOKEN to enable cross-session progress sync.'>"
-                "🏡 Local mode</div>"
-            )
-
-    # ---- About modal ----
-    gr.HTML(
-        "<div id='rivet-about-modal' class='rivet-modal-backdrop' role='dialog' aria-modal='true'>"
-        "  <div class='rivet-modal'>"
-        "    <h2>About rivet</h2>"
-        f"   <p>{DISCLAIMER}</p>"
-        "    <p>Phoneme scoring: wav2vec2 (facebook/wav2vec2-lv-60-espeak-cv-ft) + "
-        "       Praat formant analysis with CTC-guided /r/ segment isolation.<br>"
-        "       Coaching: NVIDIA Nemotron 3 Nano 4B via Hugging Face Inference Providers.<br>"
-        "       Voice: Kyutai pocket-tts.</p>"
-        "    <p>Sign in with Hugging Face to save your progress across sessions.</p>"
-        "    <p>Built for the Build Small Hackathon, June 2026.</p>"
-        "    <button class='rivet-modal-close' onclick=\"window.closeRivetAbout()\">Close</button>"
-        "  </div>"
-        "</div>"
-    )
 
     # ============================================================
-    # HOME view
+    # APP SHELL — left sidebar + right main content area
     # ============================================================
-    with gr.Column(visible=True, elem_classes=["rivet-home"]) as home_view:
+    with gr.Row(elem_classes=["rhotic-shell"]):
 
-        welcome_display = gr.HTML(elem_id="rivet-welcome-wrap")
-        resume_display  = gr.HTML(elem_id="rivet-resume-wrap")
-        resume_btn      = gr.Button(
-            "▶ Resume where you left off",
-            variant="primary",
-            visible=False,
-            elem_id="resume-btn",
-            elem_classes=["rivet-resume-btn"],
-        )
+        # ---- SIDEBAR ----
+        with gr.Column(elem_classes=["rhotic-sidebar"]):
+            sidebar_display = gr.HTML(elem_id="rhotic-sidebar-wrap")
+            # Hidden tab-trigger buttons (clicks bridged from the
+            # rendered .rhotic-tab divs via the demo.load JS hook).
+            with gr.Row(elem_classes=["rhotic-hidden-row"]):
+                tab_btn_learn   = gr.Button("learn",   elem_id="hidden-tab-learn",
+                                             elem_classes=["rhotic-hidden-btn"])
+                tab_btn_twister = gr.Button("twister", elem_id="hidden-tab-twister",
+                                             elem_classes=["rhotic-hidden-btn"])
+                tab_btn_profile = gr.Button("profile", elem_id="hidden-tab-profile",
+                                             elem_classes=["rhotic-hidden-btn"])
 
-        gr.HTML("<div class='rivet-pick-title'>Choose a level to practice</div>")
+        # ---- MAIN CONTENT COLUMN ----
+        with gr.Column(elem_classes=["rhotic-main-col"]):
 
-        # Inline <style> for the level module cards. Co-located with the
-        # buttons so it ships in the body (after any bundled Gradio CSS)
-        # and wins on cascade order, not just specificity. Each card's
-        # graphic is set via the `--level-img` CSS variable so we don't
-        # repeat the card-styling block five times.
-        #
-        # We hit BOTH `#level-btn-N` (in case Gradio puts elem_id on the
-        # wrapper) AND `button#level-btn-N` (in case it goes on the button
-        # itself). Whichever element actually carries the ID, the rule
-        # matches with high specificity (1,0,1+).
-        _level_imgs = [
-            _asset_url(f"levels/level_{i}.png") for i in range(1, 6)
-        ]
-        _level_btn_selectors = ", ".join(
-            f"#level-btn-{i}, button#level-btn-{i}, "
-            f"#level-btn-{i} button"
-            for i in range(5)
-        )
-        _level_btn_hover_selectors = ", ".join(
-            f"#level-btn-{i}:hover, button#level-btn-{i}:hover, "
-            f"#level-btn-{i} button:hover"
-            for i in range(5)
-        )
-        _level_btn_before_selectors = ", ".join(
-            f"#level-btn-{i}::before, button#level-btn-{i}::before, "
-            f"#level-btn-{i} button::before"
-            for i in range(5)
-        )
-        _per_card_img_rules = "\n".join(
-            f"#level-btn-{i}, button#level-btn-{i}, #level-btn-{i} button "
-            f"{{ --level-img: url('{_level_imgs[i]}'); }}"
-            for i in range(5)
-        )
-        gr.HTML(f"""
-<style>
-/* Card layout — image on top, name underneath. The image area is a
-   flex child that grows to fill whatever vertical space the card has,
-   so the picture is always shown in full (background-size: contain). */
-{_level_btn_selectors} {{
-  background: white !important;
-  border: 1px solid var(--rivet-mist) !important;
-  border-radius: 18px !important;
-  box-shadow: 0 4px 14px var(--rivet-shadow) !important;
-  color: var(--rivet-ink) !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 600 !important;
-  font-size: 0.95rem !important;
-  letter-spacing: -0.005em !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 270px !important;
-  max-height: 270px !important;
-  padding: 0.65rem 0.5rem 0.85rem 0.5rem !important;
-  text-align: center !important;
-  line-height: 1.3 !important;
-  white-space: normal !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-end !important;
-  cursor: pointer !important;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
-}}
-{_level_btn_before_selectors} {{
-  content: '';
-  display: block;
-  width: 100%;
-  background-image: var(--level-img);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  flex: 1 1 auto;
-  min-height: 0;
-  margin-bottom: 0.55rem;
-}}
-{_level_btn_hover_selectors} {{
-  border-color: var(--rivet-coral) !important;
-  box-shadow: 0 12px 26px rgba(15, 42, 77, 0.14) !important;
-  transform: translateY(-3px) !important;
-  background: white !important;
-}}
-/* Per-card image variables */
-{_per_card_img_rules}
-</style>
+            # ===== LEARN view (path of levels) =====
+            with gr.Column(visible=True, elem_classes=["rhotic-learn"]) as home_view:
+                welcome_display = gr.HTML(elem_id="rhotic-welcome-wrap")
+                resume_display  = gr.HTML(elem_id="rhotic-resume-wrap")
+                resume_btn      = gr.Button(
+                    "▶ Resume where you left off",
+                    variant="primary",
+                    visible=False,
+                    elem_id="resume-btn",
+                    elem_classes=["rhotic-resume-btn"],
+                )
+                gr.HTML("<div class='rhotic-pick-title'>Your /r/ practice path</div>")
+                path_display = gr.HTML(elem_id="rhotic-path-wrap")
+                # Hidden gr.Buttons act as click bridges for the path nodes.
+                with gr.Row(elem_classes=["rhotic-hidden-row"]):
+                    level_btn_0 = gr.Button("L0", elem_id="hidden-level-btn-0",
+                                             elem_classes=["rhotic-hidden-btn"])
+                    level_btn_1 = gr.Button("L1", elem_id="hidden-level-btn-1",
+                                             elem_classes=["rhotic-hidden-btn"])
+                    level_btn_2 = gr.Button("L2", elem_id="hidden-level-btn-2",
+                                             elem_classes=["rhotic-hidden-btn"])
+                    level_btn_3 = gr.Button("L3", elem_id="hidden-level-btn-3",
+                                             elem_classes=["rhotic-hidden-btn"])
+                    level_btn_4 = gr.Button("L4", elem_id="hidden-level-btn-4",
+                                             elem_classes=["rhotic-hidden-btn"])
+
+            # ===== TWISTER view (daily tongue twister) =====
+            # Same surface as the Practice view: today's twister at top,
+            # blob character + side bubble, big circular Record button at
+            # the bottom (with a small Listen icon). The bubble + record
+            # button + celebration are all driven by the SHARED bridges,
+            # so the same JS works in either view — only one view is
+            # mounted at a time so the shared element IDs don't collide.
+            with gr.Column(visible=False, elem_classes=["rhotic-twister"]) as twister_view:
+                # Headline card with today's twister text + meta
+                twister_display = gr.HTML(elem_id="rhotic-twister-wrap")
+
+                # Blob character + side speech bubble (driven by bubble_bridge)
+                gr.HTML(CHARACTER_HTML)
+
+                # Hidden audio players (autoplay; off-screen via CSS)
+                twister_wren_audio = gr.Audio(
+                    label="", show_label=False,
+                    interactive=False, autoplay=True, type="numpy",
+                    elem_id="twister-wren-audio",
+                    elem_classes=["rhotic-audio-hidden"],
+                )
+                twister_hear_audio = gr.Audio(
+                    label="", show_label=False,
+                    interactive=False, autoplay=True, type="numpy",
+                    elem_id="twister-hear-audio",
+                    elem_classes=["rhotic-audio-hidden"],
+                )
+                # Off-screen mic widget — clicked by the visible Record btn.
+                twister_mic = gr.Audio(
+                    sources=["microphone"], type="filepath",
+                    label="", show_label=False,
+                    elem_id="twister-mic",
+                    elem_classes=["rhotic-audio-hidden"],
+                )
+                # Hidden Listen bridge button (twister-scoped).
+                with gr.Row(elem_classes=["rhotic-hidden-row"]):
+                    twister_hear_btn = gr.Button(
+                        "Listen",
+                        elem_id="twister-hear-btn",
+                        elem_classes=["rhotic-hidden-btn"],
+                    )
+
+                # Visible action bar — Listen + big Record. No Next (the
+                # twister is the same all day; user just retries).
+                gr.HTML("""
+<div class="rhotic-actions-row" id="rhotic-twister-actions">
+  <button type="button" class="rhotic-icon-btn rhotic-listen-circle"
+          data-rho-action="twister-listen" aria-label="Listen to twister">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 8.5a6.5 6.5 0 0 1 13 0c0 4-3 4-3 8a3 3 0 0 1-6 0v-1"/>
+      <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1.5a1.5 1.5 0 1 1 0 3"/>
+    </svg>
+  </button>
+  <button type="button" class="rhotic-record-btn" id="rhotic-record-btn"
+          data-rho-action="record" aria-label="Record">
+    <span class="rhotic-record-icon-wrap" id="rhotic-record-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="13" rx="3"/>
+        <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="8"  y1="22" x2="16" y2="22"/>
+      </svg>
+    </span>
+  </button>
+</div>
 """)
 
-        with gr.Row(elem_classes=["rivet-level-grid"]):
-            level_btn_0 = gr.Button(
-                "Syllables", variant="secondary",
-                elem_id="level-btn-0", elem_classes=["rivet-level-btn"],
-            )
-            level_btn_1 = gr.Button(
-                "Starting Words", variant="secondary",
-                elem_id="level-btn-1", elem_classes=["rivet-level-btn"],
-            )
-            level_btn_2 = gr.Button(
-                "Middle & End", variant="secondary",
-                elem_id="level-btn-2", elem_classes=["rivet-level-btn"],
-            )
-            level_btn_3 = gr.Button(
-                "Vocalic R", variant="secondary",
-                elem_id="level-btn-3", elem_classes=["rivet-level-btn"],
-            )
-            level_btn_4 = gr.Button(
-                "Phrases", variant="secondary",
-                elem_id="level-btn-4", elem_classes=["rivet-level-btn"],
-            )
+            # ===== PROFILE view (sign-in OR stats) =====
+            with gr.Column(visible=False, elem_classes=["rhotic-profile"]) as profile_view:
+                profile_display = gr.HTML(elem_id="rhotic-profile-wrap")
+                if _running_on_space or _has_hf_token:
+                    login_btn = gr.LoginButton(
+                        value="Sign in with Hugging Face",
+                        elem_classes=["rhotic-login-btn"],
+                    )
+                else:
+                    gr.HTML(
+                        "<div class='rhotic-profile-card' style='text-align:center;'>"
+                        "  <p style='color: var(--rhotic-text-mute);'>🏡 Local mode — "
+                        "  set <code>HF_TOKEN</code> to enable Hugging Face sign-in.</p>"
+                        "</div>"
+                    )
 
-        gr.HTML(f"<div class='rivet-footer'>{DISCLAIMER}</div>")
+            # ===== PRACTICE view (the per-word session loop) =====
+            # Minimal Duolingo-style layout:
+            #   ┌─────────────────────────────────────┐
+            #   │ [←]  Level · XP · streak progress   │   top row
+            #   ├─────────────────────────────────────┤
+            #   │              [ word ]               │
+            #   │           [ BLOB CHARACTER ]        │
+            #   │       (speech bubble overlay)       │
+            #   │                                     │
+            #   │  [🔊 Listen]            [🎙 RECORD] │   action bar
+            #   └─────────────────────────────────────┘
+            # The Gradio mic widget is rendered off-screen — a styled
+            # HTML record button bridges to it via JS, keeping the layout
+            # clean. Wren's audio + the target audio also stay hidden.
+            with gr.Column(visible=False, elem_classes=["rhotic-practice"]) as practice_view:
 
-    # ============================================================
-    # PRACTICE view
-    # ============================================================
-    with gr.Column(visible=False, elem_classes=["rivet-practice"]) as practice_view:
+                with gr.Row(elem_classes=["rhotic-practice-top"]):
+                    back_btn = gr.Button(
+                        "←",
+                        elem_id="back-btn",
+                        elem_classes=["rhotic-back-icon-btn"],
+                    )
+                    progress_display = gr.HTML(elem_id="rhotic-progress-wrap")
 
-        with gr.Row(elem_classes=["rivet-practice-top"]):
-            back_btn = gr.Button(
-                "← Home",
-                variant="secondary",
-                elem_id="back-btn",
-                elem_classes=["rivet-back-btn"],
-            )
+                levelup_display  = gr.HTML(elem_id="rhotic-levelup-wrap")
 
-        # ---- Progress bar ----
-        progress_display = gr.HTML(elem_id="rivet-progress-wrap")
-        # Level-up notification
-        levelup_display  = gr.HTML(elem_id="rivet-levelup-wrap")
-
-        # ---- Main two-column layout ----
-        with gr.Row(elem_classes=["rivet-main"]):
-
-            # ── Left column: character + transcript ──
-            with gr.Column(scale=2, elem_classes=["rivet-card"]):
+                # Centered word + blob character
+                word_display = gr.HTML(elem_id="rhotic-word-display")
+                ipa_display  = gr.HTML(elem_id="rhotic-ipa-display")
                 gr.HTML(CHARACTER_HTML)
-                transcript = gr.Chatbot(
-                    label="Session log",
-                    type="messages",
-                    height=280,
-                    show_copy_button=False,
-                )
 
-            # ── Right column: word + controls ──
-            with gr.Column(scale=3, elem_classes=["rivet-card"]):
-                word_display = gr.HTML()
-                ipa_display  = gr.HTML()
-
+                # Hidden audio players — autoplay but no visible UI.
                 wren_audio = gr.Audio(
-                    label="Wren's voice",
-                    interactive=False,
-                    autoplay=True,
-                    type="numpy",
+                    label="", show_label=False,
+                    interactive=False, autoplay=True, type="numpy",
                     elem_id="wren-audio",
+                    elem_classes=["rhotic-audio-hidden"],
                 )
-
                 hear_audio = gr.Audio(
-                    label="Target pronunciation (click Hear it)",
-                    interactive=False,
-                    autoplay=True,
-                    type="numpy",
+                    label="", show_label=False,
+                    interactive=False, autoplay=True, type="numpy",
                     elem_id="hear-audio",
+                    elem_classes=["rhotic-audio-hidden"],
+                )
+                # Chatbot kept for state but visually hidden (transcript_state
+                # still drives Wren's speech bubble via bubble_bridge).
+                transcript = gr.Chatbot(
+                    label="", show_label=False,
+                    type="messages", height=1,
+                    visible=False,
+                )
+                # Off-screen mic widget — clicked programmatically by the
+                # custom Record button below.
+                mic = gr.Audio(
+                    sources=["microphone"], type="filepath",
+                    label="", show_label=False,
+                    elem_id="user-mic",
+                    elem_classes=["rhotic-audio-hidden"],
                 )
 
-                with gr.Row(elem_classes=["rivet-btn-row"]):
+                # Hidden Gradio buttons — clicks bridged from the custom
+                # HTML buttons below via window.rhoClickHidden().
+                with gr.Row(elem_classes=["rhotic-hidden-row"]):
                     hear_btn = gr.Button(
-                        "🔊 Hear it",
-                        variant="secondary",
+                        "Listen",
                         elem_id="hear-btn",
+                        elem_classes=["rhotic-hidden-btn"],
                     )
                     next_btn = gr.Button(
-                        "Next →",
-                        variant="primary",
+                        "Next",
                         elem_id="next-btn",
+                        elem_classes=["rhotic-hidden-btn"],
                     )
 
-                mic = gr.Audio(
-                    sources=["microphone"],
-                    type="filepath",
-                    label="🎙️ Record yourself",
-                    elem_id="user-mic",
-                )
+                # Visible action bar: Listen (ear) · Record (mic) · Next (→).
+                # Clicks are wired via data-rho-action + delegated listener
+                # in the demo.load JS, since Gradio strips inline onclick
+                # from dynamic gr.HTML updates.
+                gr.HTML("""
+<div class="rhotic-actions-row" id="rhotic-actions-row">
+  <button type="button" class="rhotic-icon-btn rhotic-listen-circle"
+          data-rho-action="listen" aria-label="Listen to target">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 8.5a6.5 6.5 0 0 1 13 0c0 4-3 4-3 8a3 3 0 0 1-6 0v-1"/>
+      <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1.5a1.5 1.5 0 1 1 0 3"/>
+    </svg>
+  </button>
+  <button type="button" class="rhotic-record-btn" id="rhotic-record-btn"
+          data-rho-action="record" aria-label="Record">
+    <span class="rhotic-record-icon-wrap" id="rhotic-record-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="13" rx="3"/>
+        <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="8"  y1="22" x2="16" y2="22"/>
+      </svg>
+    </span>
+  </button>
+  <button type="button" class="rhotic-icon-btn rhotic-next-circle"
+          data-rho-action="next" aria-label="Next word">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"/>
+      <polyline points="13 6 19 12 13 18"/>
+    </svg>
+  </button>
+</div>
+""")
 
-        gr.HTML(f"<div class='rivet-footer'>{DISCLAIMER}</div>")
+    # ============================================================
+    # DEV PANEL — hidden modal, toggled by Shift+D.
+    # Lets the demo presenter edit XP / streak / level on the fly
+    # so they can showcase unlocked levels without grinding XP.
+    # ============================================================
+    with gr.Column(elem_id="rhotic-dev-modal") as dev_modal:
+        with gr.Column(elem_classes=["rhotic-dev-card"]):
+            gr.HTML(
+                "<h2>Demo controls</h2>"
+                "<p>Edit XP, streak, or level on the fly, then Apply to "
+                "re-render the path. Press <strong>Shift+D</strong> to close.</p>"
+            )
+            dev_xp     = gr.Number(label="XP",        value=0, precision=0, minimum=0)
+            dev_streak = gr.Number(label="Streak",    value=0, precision=0, minimum=0)
+            dev_level  = gr.Number(label="Level (0–4)", value=0, precision=0,
+                                   minimum=0, maximum=4)
+            with gr.Row():
+                dev_apply  = gr.Button("Apply",      variant="primary")
+                dev_unlock = gr.Button("Unlock all", variant="secondary")
+            gr.HTML("<p class='rhotic-dev-hint'>Shift+D toggles this panel</p>")
 
     # ---------------------------------------------------------------------------
     # Output signatures
@@ -841,6 +1130,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
         wren_audio, transcript,
         bubble_bridge, correct_bridge, ready_bridge,
         progress_display, levelup_display,
+        celebrate_bridge,
     ]
 
     next_outputs = [
@@ -852,9 +1142,16 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
         levelup_display,
     ]
 
-    # start_session writes these outputs in this order (matches _start_session)
-    start_session_outputs = [
-        view_state, home_view, practice_view,
+    # All view-switch handlers share these five "shell" outputs in this exact
+    # order: view_state, then the 4 view-column visibility updates, then the
+    # sidebar HTML (so the active tab moves). Centralizing keeps the output
+    # lists in sync as new views/tabs are added.
+    _view_shell_outs = [
+        view_state, home_view, twister_view, profile_view, practice_view,
+        sidebar_display,
+    ]
+
+    start_session_outputs = _view_shell_outs + [
         word_state, history_state, transcript_state,
         level_state, xp_state, streak_state, best_streak_state,
         word_display, ipa_display, progress_display,
@@ -863,17 +1160,97 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
         levelup_display,
     ]
 
-    app_load_outputs = [
-        view_state, home_view, practice_view,
-        welcome_display, resume_display, resume_btn,
+    app_load_outputs = _view_shell_outs + [
+        welcome_display, resume_display, resume_btn, path_display,
+        profile_display,
         level_state, xp_state, streak_state, best_streak_state, history_state,
         remembered_user_state,
     ]
 
-    back_home_outputs = [
-        view_state, home_view, practice_view,
-        resume_display, resume_btn,
+    back_home_outputs = _view_shell_outs + [
+        resume_display, resume_btn, path_display,
     ]
+
+    # Tab-switch handlers — all share the shell outputs; per-tab extras
+    # (twister card, profile card) get added in the wiring section below.
+    tab_learn_outputs    = _view_shell_outs
+    tab_twister_outputs  = _view_shell_outs + [twister_state, twister_display]
+    tab_profile_outputs  = _view_shell_outs + [profile_display]
+
+    def on_tab_learn():
+        return (
+            "learn",
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            _sidebar_html("learn"),
+        )
+
+    def on_tab_twister():
+        twister = todays_twister()
+        return (
+            "twister",
+            gr.update(visible=False),
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            _sidebar_html("twister"),
+            twister,                            # twister_state
+            _twister_card_html(twister),        # twister_display
+        )
+
+    def on_tab_profile(level, xp, streak, best_streak, history,
+                       profile: gr.OAuthProfile | None):
+        return (
+            "profile",
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=True),
+            gr.update(visible=False),
+            _sidebar_html("profile"),
+            _profile_html(profile, level, xp, streak, best_streak, history),
+        )
+
+    # Twister submission — same scoring pipeline as Practice, no XP/streak.
+    # Pushes to shared bubble_bridge (Wren's text) and celebrate_bridge
+    # (confetti on correct) so the Practice JS works here unchanged.
+    def on_twister_hear(twister):
+        if not twister:
+            return gr.update(), gr.update()
+        sr, audio = _tts_word(twister["text"])
+        # Mirror the twister text into the bubble while we play it.
+        return (sr, audio), f"Listen: \"{twister['text']}\""
+
+    def on_twister_submit(audio_path, twister):
+        # 4 outputs: twister_wren_audio, bubble_bridge, celebrate_bridge, twister_mic
+        if not twister or not audio_path:
+            return gr.update(), gr.update(), gr.update(), gr.update()
+        try:
+            score = score_pronunciation(
+                audio_path, twister["text"], twister["phonemes"],
+            )
+        except Exception as e:
+            print(f"[twister] scoring error: {e}")
+            err = "Couldn't hear that clearly — try recording again."
+            sr, audio = tts_mod.synthesize_full(err)
+            return (sr, audio), err, "", gr.update(value=None)
+
+        # Natural thinking pause (matches Practice — the blob's thinking
+        # pose has time to be visible thanks to the state_bridge flow).
+        time.sleep(random.uniform(2.0, 4.0))
+
+        quality = score.get("r_quality")
+        if quality == "correct":
+            reply = "Nice work — your /r/ came through clearly!"
+        elif quality == "approaching":
+            reply = "Getting there. Your /r/ is forming but not locked in yet."
+        else:
+            reply = "Let me hear that again. Focus on the /r/ — try slowing down."
+        sr, audio = tts_mod.synthesize_full(reply)
+        high_score = quality == "correct"
+        celebrate = f"go-{time.time()}" if high_score else ""
+        return (sr, audio), reply, celebrate, gr.update(value=None)
 
     # ---------------------------------------------------------------------------
     # Lock / unlock helpers
@@ -893,15 +1270,319 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
     # Wire events
     # ---------------------------------------------------------------------------
 
-    # App boot — render home, populate welcome + resume from progress dataset
+    # App boot — render home, populate welcome + resume from progress dataset.
     demo.load(on_app_load, inputs=None, outputs=app_load_outputs)
+
+    # Sidebar tab clicks (bridged from .rhotic-tab DOM nodes via JS).
+    tab_btn_learn.click(
+        on_tab_learn, inputs=None, outputs=tab_learn_outputs,
+    )
+    tab_btn_twister.click(
+        on_tab_twister, inputs=None, outputs=tab_twister_outputs,
+    )
+    tab_btn_profile.click(
+        on_tab_profile,
+        inputs=[level_state, xp_state, streak_state,
+                best_streak_state, history_state],
+        outputs=tab_profile_outputs,
+    )
+
+    # Twister tab — Hear-it + mic recording → score → bubble + celebrate.
+    # Uses shared bridges so the Practice JS handles bubble + thinking +
+    # celebration without any twister-specific wiring on the front end.
+    twister_hear_btn.click(
+        on_twister_hear,
+        inputs=[twister_state],
+        outputs=[twister_hear_audio, bubble_bridge],
+    )
+
+    def _twister_lock():
+        return (gr.update(interactive=False), gr.update(interactive=False),
+                "thinking")
+
+    def _twister_unlock():
+        return (gr.update(interactive=True), gr.update(interactive=True),
+                "idle")
+
+    _twister_lock_outs = [twister_mic, twister_hear_btn, state_bridge]
+
+    twister_mic.start_recording(
+        lambda: "listening", inputs=None, outputs=[state_bridge],
+    )
+    twister_mic.stop_recording(
+        _twister_lock, inputs=None, outputs=_twister_lock_outs,
+    ).then(
+        on_twister_submit,
+        inputs=[twister_mic, twister_state],
+        outputs=[twister_wren_audio, bubble_bridge, celebrate_bridge, twister_mic],
+    ).then(
+        _twister_unlock, inputs=None, outputs=_twister_lock_outs,
+    )
+
+    # JS bridge for path clicks + Shift+D dev panel toggle. Injected via the
+    # demo.load `js` parameter (Gradio's intended way to run code on load).
+    # Inline onclick="..." in gr.HTML gets stripped on dynamic updates, so we
+    # use a single delegated click listener on document instead.
+    demo.load(
+        None, None, None,
+        js=r"""
+() => {
+  if (window.__rhoticWired) return;
+  window.__rhoticWired = true;
+
+  // Helper: click a hidden Gradio button by elem_id (also exposed as
+  // window.rhoClickHidden so inline onclick handlers can use it).
+  function rhoClickHidden(id) {
+    const wrap = document.getElementById(id);
+    if (!wrap) return;
+    const btn = wrap.tagName === 'BUTTON' ? wrap : wrap.querySelector('button');
+    if (btn) btn.click();
+  }
+  window.rhoClickHidden = rhoClickHidden;
+
+  // Path-node click → trigger the matching hidden Gradio button.
+  document.addEventListener('click', function(e) {
+    const node = e.target.closest('.rhotic-path-node');
+    if (!node) return;
+    if (node.dataset.unlocked !== '1') return;
+    rhoClickHidden('hidden-level-btn-' + node.dataset.level);
+  });
+
+  // Sidebar tab click → trigger the matching hidden tab button.
+  document.addEventListener('click', function(e) {
+    const tab = e.target.closest('.rhotic-tab[data-tab]');
+    if (!tab) return;
+    rhoClickHidden('hidden-tab-' + tab.dataset.tab);
+  });
+
+  // Practice / Twister action-row buttons (Listen / Record / Next).
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-rho-action]');
+    if (!btn) return;
+    const action = btn.dataset.rhoAction;
+    if (action === 'listen')         rhoClickHidden('hear-btn');
+    else if (action === 'next')      rhoClickHidden('next-btn');
+    else if (action === 'twister-listen') rhoClickHidden('twister-hear-btn');
+    else if (action === 'record')    window.rhoticToggleMic();
+  });
+
+  // Big custom Record button → clicks Gradio audio's internal record
+  // button so we can fully restyle the mic UI without forking Gradio.
+  // We also flip the visual state immediately for instant feedback;
+  // the state_bridge watcher will reconcile shortly after.
+  window.rhoticToggleMic = function() {
+    // Either the Practice mic ('user-mic') or the Twister mic is mounted
+    // at any given time; one of them will be in the DOM.
+    const wrap = document.getElementById('user-mic')
+              || document.getElementById('twister-mic');
+    if (!wrap) return;
+    const inner =
+      wrap.querySelector('button.record-button') ||
+      wrap.querySelector('button[aria-label*="record" i]') ||
+      wrap.querySelector('button[aria-label*="stop" i]') ||
+      wrap.querySelector('button');
+    if (!inner) return;
+    const recBtn = document.getElementById('rhotic-record-btn');
+    // Block taps while the model is scoring — Gradio audio is busy too.
+    if (recBtn && recBtn.classList.contains('thinking')) return;
+    inner.click();
+    if (recBtn) {
+      if (recBtn.classList.contains('recording')) {
+        recBtn.classList.remove('recording');
+        setRecordIcon(recBtn, 'idle');
+      } else {
+        recBtn.classList.add('recording');
+        setRecordIcon(recBtn, 'recording');
+      }
+    }
+  };
+  function setRecordIcon(btn, state) {
+    const iconWrap = btn.querySelector('.rhotic-record-icon-wrap');
+    if (!iconWrap) return;
+    if (state === 'recording')      iconWrap.innerHTML = STOP_SVG;
+    else if (state === 'thinking')  iconWrap.innerHTML = HOURGLASS_SVG;
+    else                            iconWrap.innerHTML = MIC_SVG;
+  }
+
+  // SVG icons used inside the big Record button — swapped in/out based
+  // on state_bridge value so the user can see whether to start or stop.
+  const MIC_SVG =
+    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
+    "stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>" +
+    "<rect x='9' y='2' width='6' height='13' rx='3'/>" +
+    "<path d='M19 10v1a7 7 0 0 1-14 0v-1'/>" +
+    "<line x1='12' y1='18' x2='12' y2='22'/>" +
+    "<line x1='8' y1='22' x2='16' y2='22'/>" +
+    "</svg>";
+  const STOP_SVG =
+    "<svg viewBox='0 0 24 24' fill='currentColor'>" +
+    "<rect x='6' y='6' width='12' height='12' rx='2'/>" +
+    "</svg>";
+  const HOURGLASS_SVG =
+    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
+    "stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" +
+    "<path d='M6 2h12M6 22h12M6 2v4a6 6 0 0 0 12 0V2M6 22v-4a6 6 0 0 1 12 0v4'/>" +
+    "</svg>";
+
+  // ---------- CELEBRATION MODAL ----------
+  // Triggered by server (celebrate_bridge) on a correct answer, or by
+  // Shift+S in the practice view. Press Enter to dismiss.
+  const CONFETTI_COLORS = ['#3B82F6', '#22C55E', '#F59E0B', '#A78BFA', '#EC4899', '#F472B6'];
+  function showCelebration() {
+    const m = document.getElementById('rhotic-celebrate-modal');
+    if (!m) return;
+    const confetti = m.querySelector('.rhotic-confetti');
+    if (confetti) {
+      confetti.innerHTML = '';
+      for (let i = 0; i < 60; i++) {
+        const p = document.createElement('div');
+        p.className = 'rhotic-confetti-piece';
+        p.style.left = (Math.random() * 100) + 'vw';
+        p.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        p.style.animationDuration = (2.2 + Math.random() * 2.2) + 's';
+        p.style.animationDelay    = (Math.random() * 0.6) + 's';
+        confetti.appendChild(p);
+      }
+    }
+    m.classList.add('open');
+  }
+  function hideCelebration() {
+    const m = document.getElementById('rhotic-celebrate-modal');
+    if (m) m.classList.remove('open');
+  }
+  document.addEventListener('keydown', function(e) {
+    // Enter closes celebration if open
+    if (e.key === 'Enter') {
+      const m = document.getElementById('rhotic-celebrate-modal');
+      if (m && m.classList.contains('open')) {
+        e.preventDefault();
+        hideCelebration();
+        return;
+      }
+    }
+    // Shift+S manually triggers celebration (during practice / for demo)
+    if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+      showCelebration();
+    }
+  });
+  // Watch celebrate_bridge for server-triggered celebrations.
+  function watchCelebrate() {
+    const box = document.getElementById('rhotic-celebrate-bridge');
+    if (!box) { setTimeout(watchCelebrate, 200); return; }
+    const input = box.querySelector('textarea, input');
+    if (!input) { setTimeout(watchCelebrate, 200); return; }
+    let last = input.value || '';
+    setInterval(() => {
+      const v = input.value || '';
+      if (v && v !== last) { last = v; showCelebration(); }
+      else if (!v) { last = ''; }
+    }, 100);
+  }
+  watchCelebrate();
+
+  // ---------- BUBBLE + BLOB POSE + RECORD BUTTON STATE ----------
+  // One unified poller drives everything that mirrors a hidden bridge.
+  // Inline <script> in gr.HTML gets stripped by Gradio 5's sanitizer, so
+  // we can't rely on character.html for any JS — it all has to live here.
+  function getInput(id) {
+    const box = document.getElementById(id);
+    if (!box) return null;
+    return box.querySelector('textarea, input');
+  }
+  function setBubble(text) {
+    const b = document.getElementById('rhotic-bubble');
+    if (!b) return;
+    if (text && text.trim()) {
+      b.textContent = text;
+      b.classList.remove('hidden');
+    } else {
+      b.classList.add('hidden');
+    }
+  }
+  function setBlobPose(pose) {
+    const img = document.getElementById('rhotic-blob');
+    if (!img) return;
+    const want = pose === 'thinking'
+      ? img.dataset.rhoticThinking
+      : img.dataset.rhoticIdle;
+    if (want && img.getAttribute('src') !== want) {
+      img.setAttribute('src', want);
+    }
+  }
+  function setReadyBadge(show) {
+    const b = document.getElementById('rhotic-ready-badge');
+    if (!b) return;
+    if (show) b.classList.remove('hidden');
+    else b.classList.add('hidden');
+  }
+  function setRecordButton(state) {
+    const btn = document.getElementById('rhotic-record-btn');
+    const iconWrap = document.getElementById('rhotic-record-icon-wrap');
+    if (!btn || !iconWrap) return;
+    btn.classList.remove('recording', 'thinking');
+    if (state === 'listening') {
+      btn.classList.add('recording');
+      iconWrap.innerHTML = STOP_SVG;
+      btn.setAttribute('aria-label', 'Stop recording');
+    } else if (state === 'thinking') {
+      btn.classList.add('thinking');
+      iconWrap.innerHTML = HOURGLASS_SVG;
+      btn.setAttribute('aria-label', 'Scoring');
+    } else {
+      iconWrap.innerHTML = MIC_SVG;
+      btn.setAttribute('aria-label', 'Record');
+    }
+  }
+
+  let lastBubble = null, lastState = null, lastReady = null;
+  setInterval(() => {
+    const bubbleInput = getInput('rhotic-bubble-bridge');
+    if (bubbleInput && bubbleInput.value !== lastBubble) {
+      lastBubble = bubbleInput.value;
+      setBubble(lastBubble);
+    }
+    const stateInput = getInput('rhotic-state-bridge');
+    if (stateInput && stateInput.value !== lastState) {
+      lastState = stateInput.value;
+      setBlobPose(lastState === 'thinking' ? 'thinking' : 'idle');
+      setRecordButton(lastState);
+    }
+    const readyInput = getInput('rhotic-ready-bridge');
+    if (readyInput && readyInput.value !== lastReady) {
+      lastReady = readyInput.value;
+      setReadyBadge(lastReady === 'true');
+    }
+  }, 100);
+
+  // Shift+D toggles the dev panel. Ignored when focus is in a text field.
+  document.addEventListener('keydown', function(e) {
+    if (!e.shiftKey) return;
+    if (e.key !== 'D' && e.key !== 'd') return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    e.preventDefault();
+    const m = document.getElementById('rhotic-dev-modal');
+    if (m) m.classList.toggle('open');
+  });
+
+  // Click backdrop (not the card) to close.
+  document.addEventListener('click', function(e) {
+    const m = document.getElementById('rhotic-dev-modal');
+    if (m && e.target === m) m.classList.remove('open');
+  });
+}
+""",
+    )
 
     # Level pickers — re-load progress from dataset at click time, then
     # jump to the chosen level. OAuthProfile is auto-injected by Gradio.
     def _wire_level_btn(btn, level):
         btn.click(
             on_pick_level,
-            inputs=[gr.State(level)],
+            inputs=[gr.State(level), xp_state],
             outputs=start_session_outputs,
         )
     _wire_level_btn(level_btn_0, 0)
@@ -962,16 +1643,62 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rivet R Coach") as demo:
         _unlock, inputs=None, outputs=unlock_outputs,
     )
 
-    # JavaScript glue: open/close About modal
+    # ---------------------------------------------------------------------------
+    # Dev panel wiring — Apply / Unlock-all both push xp/streak/level into the
+    # session state and re-render the path (and the practice progress bar, in
+    # case the panel is opened mid-session).
+    # ---------------------------------------------------------------------------
+    def on_dev_apply(xp, streak, level, best_streak, history,
+                     profile: gr.OAuthProfile | None):
+        xp     = int(max(0, xp or 0))
+        streak = int(max(0, streak or 0))
+        level  = int(max(0, min(4, level or 0)))
+        best   = max(int(best_streak or 0), streak)
+        return (
+            xp, streak, level, best,
+            _path_html(level, xp),
+            _level_bar_html(level, xp, streak),
+            _profile_html(profile, level, xp, streak, best, history),
+        )
+
+    def on_dev_unlock_all(streak, level, best_streak, history,
+                          profile: gr.OAuthProfile | None):
+        xp = max(LEVEL_UNLOCK_XP.values()) + 100
+        streak = int(max(0, streak or 0))
+        level  = int(max(0, min(4, level or 0)))
+        best   = max(int(best_streak or 0), streak)
+        return (
+            xp, streak, level, best,
+            _path_html(level, xp),
+            _level_bar_html(level, xp, streak),
+            _profile_html(profile, level, xp, streak, best, history),
+        )
+
+    _dev_outputs = [xp_state, streak_state, level_state, best_streak_state,
+                    path_display, progress_display, profile_display]
+    dev_apply.click(
+        on_dev_apply,
+        inputs=[dev_xp, dev_streak, dev_level, best_streak_state, history_state],
+        outputs=_dev_outputs,
+    )
+    dev_unlock.click(
+        on_dev_unlock_all,
+        inputs=[dev_streak, dev_level, best_streak_state, history_state],
+        outputs=_dev_outputs,
+    )
+
+    # About-modal open/close. Path clicks + Shift+D are wired via the
+    # demo.load(js=...) hook above instead — that fires reliably whereas
+    # script tags inside gr.HTML are sometimes skipped on dynamic updates.
     gr.HTML("""
     <script>
-    (function initRivetModal() {
-      const modal = document.getElementById('rivet-about-modal');
-      if (!modal) { setTimeout(initRivetModal, 200); return; }
-      window.openRivetAbout  = () => modal.classList.add('open');
-      window.closeRivetAbout = () => modal.classList.remove('open');
+    (function initRhoticModal() {
+      const modal = document.getElementById('rhotic-about-modal');
+      if (!modal) { setTimeout(initRhoticModal, 200); return; }
+      window.openRhoticAbout  = () => modal.classList.add('open');
+      window.closeRhoticAbout = () => modal.classList.remove('open');
       modal.addEventListener('click', e => {
-        if (e.target === modal) window.closeRivetAbout();
+        if (e.target === modal) window.closeRhoticAbout();
       });
     })();
     </script>

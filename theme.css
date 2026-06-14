@@ -1,20 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=League+Spartan:wght@500;600;700&display=swap');
 
 :root {
-  --rivet-cream: #FFFFFF;
-  --rivet-ink: #0F2A4D;
-  --rivet-coral: #2563EB;
-  --rivet-coral-dark: #1D4ED8;
-  --rivet-pink: #DBEAFE;
-  --rivet-butter: #FEF3C7;
-  --rivet-mist: #E2E8F0;
-  --rivet-shadow: rgba(15, 42, 77, 0.08);
-  --rivet-green: #16a34a;
-  --rivet-green-light: #dcfce7;
-  --rivet-amber: #d97706;
-  --rivet-amber-light: #fef3c7;
-  --rivet-purple: #7c3aed;
-  --rivet-purple-light: #ede9fe;
+  /* Dark palette inspired by Duolingo's app shell.
+     Variable names kept stable from the light-theme era so existing rules
+     just cascade — `cream` is the page bg (now near-black), `ink` is the
+     primary text (now white), etc. */
+  --rhotic-cream: #131F24;
+  --rhotic-ink: #FFFFFF;
+  --rhotic-text-mute: #94A3B8;
+  --rhotic-coral: #3B82F6;
+  --rhotic-coral-dark: #2563EB;
+  --rhotic-pink: rgba(59, 130, 246, 0.12);
+  --rhotic-butter: rgba(217, 119, 6, 0.18);
+  --rhotic-mist: rgba(255, 255, 255, 0.08);
+  --rhotic-shadow: rgba(0, 0, 0, 0.45);
+  --rhotic-green: #22C55E;
+  --rhotic-green-light: rgba(34, 197, 94, 0.16);
+  --rhotic-amber: #F59E0B;
+  --rhotic-amber-light: rgba(245, 158, 11, 0.16);
+  --rhotic-purple: #A78BFA;
+  --rhotic-purple-light: rgba(167, 139, 250, 0.16);
+  --rhotic-bg-side: #0F1A1F;
+  --rhotic-bg-card: #1F2C2F;
+  --rhotic-border: rgba(255, 255, 255, 0.07);
 }
 
 * { box-sizing: border-box; }
@@ -23,68 +31,174 @@ body, .gradio-container, .gradio-container * {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
+html, body {
+  background: var(--rhotic-cream) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Container fills the entire viewport — sidebar pins to left edge,
+   main content gets the rest. No max-width, no centering. */
 .gradio-container {
-  background: var(--rivet-cream) !important;
-  color: var(--rivet-ink) !important;
-  max-width: 1040px !important;
-  margin: 0 auto !important;
-  padding: 1.25rem 1.5rem 2.5rem 1.5rem !important;
+  background: var(--rhotic-cream) !important;
+  color: var(--rhotic-ink) !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
   line-height: 1.6 !important;
+  min-height: 100vh !important;
+}
+.gradio-container > .main,
+.gradio-container > .wrap,
+.gradio-container > .contain {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Kill the default Gradio footer chrome */
 footer, .gradio-container footer { display: none !important; }
 
-/* ---------------- Header ---------------- */
-.rivet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 0.25rem 1.25rem 0.25rem;
-  border-bottom: 1px solid var(--rivet-mist);
-  margin-bottom: 1.75rem;
+/* ================================================================
+   APP SHELL — sidebar (left) + main content area (right).
+   Duolingo-style fixed navigation, dark background.
+   ================================================================ */
+/* Shell — full viewport, fixed left sidebar + scrolling main area.
+   Sidebar uses position:fixed (not sticky) so it never shifts when
+   Gradio re-renders content inside the main area. */
+.rhotic-shell {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  flex-wrap: nowrap !important;
+  background: var(--rhotic-cream) !important;
 }
-.rivet-wordmark {
+.rhotic-sidebar {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 240px !important;
+  height: 100vh !important;
+  background: var(--rhotic-bg-side) !important;
+  border-right: 1px solid var(--rhotic-border) !important;
+  padding: 1.5rem 0.9rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+  z-index: 100 !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+/* Main column starts after the fixed 240px sidebar */
+.rhotic-main-col {
+  margin-left: 240px !important;
+  padding: 2rem 2.5rem 2.5rem 2.5rem !important;
+  max-width: 920px !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Wordmark sits at top of sidebar */
+.rhotic-wordmark {
   font-family: 'League Spartan', sans-serif;
   font-weight: 600;
-  font-size: 1.75rem;
-  color: var(--rivet-coral);
+  font-size: 1.65rem;
+  color: var(--rhotic-coral);
   letter-spacing: -0.01em;
   text-transform: lowercase;
   line-height: 1;
+  padding: 0.25rem 0.85rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--rhotic-border);
+  margin-bottom: 0.85rem;
 }
-.rivet-about {
-  font-size: 0.875rem;
-  color: var(--rivet-ink);
-  opacity: 0.55;
-  text-decoration: none;
+
+/* Sidebar tabs (rendered as gr.HTML, clicks delegated through JS bridge) */
+.rhotic-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
   cursor: pointer;
+  color: var(--rhotic-text-mute);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+  border: 2px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.rhotic-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--rhotic-ink);
+}
+.rhotic-tab.active {
+  background: var(--rhotic-pink);
+  color: var(--rhotic-coral);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.rhotic-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.rhotic-tab-icon svg { width: 20px; height: 20px; }
+.rhotic-tab-label { line-height: 1; }
+
+/* Sidebar footer (small About link + disclaimer) */
+.rhotic-side-footer {
+  margin-top: auto;
+  padding: 0.85rem;
+  font-size: 0.72rem;
+  color: var(--rhotic-text-mute);
+  border-top: 1px solid var(--rhotic-border);
+  line-height: 1.45;
+}
+.rhotic-side-footer .rhotic-about-link {
   background: transparent;
   border: none;
-  padding: 0.25rem 0.5rem;
+  color: var(--rhotic-coral);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.rivet-about:hover { opacity: 1; }
+.rhotic-side-footer .rhotic-about-link:hover { text-decoration: underline; }
 
-/* ---------------- Two-column main layout ---------------- */
-.rivet-main {
+/* Practice-view two-column layout (renamed from .rhotic-main → so the
+   `.rhotic-main` name is free for the right-side shell content). */
+.rhotic-practice-grid {
   display: grid;
   grid-template-columns: 2fr 3fr;
   gap: 2.5rem;
   align-items: start;
 }
 @media (max-width: 768px) {
-  .rivet-main { grid-template-columns: 1fr; gap: 1.5rem; }
+  .rhotic-practice-grid { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 
 /* ---------------- Cards / panels ----------------
-   Only elements that explicitly opt into .rivet-card get the white-paper
+   Only elements that explicitly opt into .rhotic-card get the white-paper
    card treatment. Stripping the global .block rule kills the "every
    gr.HTML in its own card" effect that was littering the home view. */
-.rivet-card {
-  background: white !important;
+.rhotic-card {
+  background: var(--rhotic-bg-card) !important;
   border-radius: 20px !important;
-  box-shadow: 0 4px 24px var(--rivet-shadow) !important;
-  border: none !important;
+  box-shadow: 0 4px 24px var(--rhotic-shadow) !important;
+  border: 1px solid var(--rhotic-border) !important;
   padding: 2rem 1.75rem !important;
 }
 .gradio-container .gr-panel,
@@ -95,23 +209,23 @@ footer, .gradio-container footer { display: none !important; }
 }
 
 /* ---------------- Word + IPA display ---------------- */
-.rivet-word {
+.rhotic-word {
   font-family: 'Fraunces', serif;
   font-weight: 600;
   font-size: 5rem;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   text-align: center;
   line-height: 1.05;
   letter-spacing: -0.02em;
   margin: 0.5rem 0 0 0;
 }
-@media (max-width: 768px) { .rivet-word { font-size: 3.5rem; } }
+@media (max-width: 768px) { .rhotic-word { font-size: 3.5rem; } }
 
-.rivet-ipa {
+.rhotic-ipa {
   font-family: 'Inter', sans-serif;
   font-size: 1.25rem;
   font-weight: 400;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   opacity: 0.6;
   text-align: center;
   margin: 0.35rem 0 1.75rem 0;
@@ -123,7 +237,7 @@ footer, .gradio-container footer { display: none !important; }
 .gradio-container button.primary,
 .gradio-container .gr-button-primary,
 .gradio-container button[data-testid="primary"] {
-  background: var(--rivet-coral) !important;
+  background: var(--rhotic-coral) !important;
   color: white !important;
   border: none !important;
   border-radius: 999px !important;
@@ -133,18 +247,18 @@ footer, .gradio-container footer { display: none !important; }
   padding: 0.9rem 2.25rem !important;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
-  box-shadow: 0 2px 8px var(--rivet-shadow) !important;
+  box-shadow: 0 2px 8px var(--rhotic-shadow) !important;
 }
 .gradio-container button.primary:hover,
 .gradio-container .gr-button-primary:hover {
   transform: scale(1.02);
-  background: var(--rivet-coral-dark) !important;
+  background: var(--rhotic-coral-dark) !important;
 }
 .gradio-container button.secondary,
 .gradio-container .gr-button-secondary {
-  background: var(--rivet-cream) !important;
-  color: var(--rivet-ink) !important;
-  border: 1.5px solid var(--rivet-ink) !important;
+  background: var(--rhotic-cream) !important;
+  color: var(--rhotic-ink) !important;
+  border: 1.5px solid var(--rhotic-ink) !important;
   border-radius: 999px !important;
   font-weight: 600 !important;
 }
@@ -157,9 +271,9 @@ footer, .gradio-container footer { display: none !important; }
 }
 
 /* ---------------- Banner (HF_TOKEN missing) ---------------- */
-.rivet-banner {
-  background: var(--rivet-pink);
-  color: var(--rivet-ink);
+.rhotic-banner {
+  background: var(--rhotic-pink);
+  color: var(--rhotic-ink);
   border-radius: 12px;
   padding: 0.875rem 1.25rem;
   font-size: 0.9375rem;
@@ -167,17 +281,17 @@ footer, .gradio-container footer { display: none !important; }
 }
 
 /* ---------------- Speech bubble under Rho ---------------- */
-.rivet-bubble-wrap {
+.rhotic-bubble-wrap {
   display: flex;
   justify-content: center;
   padding: 0 1rem;
 }
-.rivet-bubble {
+.rhotic-bubble {
   background: white;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   border-radius: 18px;
   padding: 1rem 1.25rem;
-  box-shadow: 0 4px 18px var(--rivet-shadow);
+  box-shadow: 0 4px 18px var(--rhotic-shadow);
   font-family: 'Fraunces', serif;
   font-size: 1.0625rem;
   line-height: 1.5;
@@ -188,7 +302,7 @@ footer, .gradio-container footer { display: none !important; }
   min-height: 2rem;
   transition: opacity 0.3s ease;
 }
-.rivet-bubble::before {
+.rhotic-bubble::before {
   content: '';
   position: absolute;
   top: -10px;
@@ -199,11 +313,11 @@ footer, .gradio-container footer { display: none !important; }
   border-right: 10px solid transparent;
   border-bottom: 12px solid white;
 }
-.rivet-bubble.hidden { opacity: 0; pointer-events: none; }
+.rhotic-bubble.hidden { opacity: 0; pointer-events: none; }
 
 /* "Ready for next word" badge */
-.rivet-ready-badge {
-  background: var(--rivet-coral);
+.rhotic-ready-badge {
+  background: var(--rhotic-coral);
   color: white;
   border-radius: 999px;
   padding: 0.55rem 1.1rem;
@@ -214,25 +328,25 @@ footer, .gradio-container footer { display: none !important; }
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
   text-align: center;
   max-width: 320px;
-  animation: rivet-ready-pulse 2s ease-in-out infinite;
+  animation: rhotic-ready-pulse 2s ease-in-out infinite;
   transition: opacity 0.3s ease;
 }
-.rivet-ready-badge.hidden {
+.rhotic-ready-badge.hidden {
   opacity: 0;
   pointer-events: none;
   animation: none;
 }
-.rivet-ready-badge strong { font-weight: 700; }
+.rhotic-ready-badge strong { font-weight: 700; }
 
-@keyframes rivet-ready-pulse {
+@keyframes rhotic-ready-pulse {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.03); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rivet-ready-badge { animation: none; }
+  .rhotic-ready-badge { animation: none; }
 }
 
-.rivet-character-wrap {
+.rhotic-character-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -240,7 +354,7 @@ footer, .gradio-container footer { display: none !important; }
 }
 
 /* ---------------- Transcript ---------------- */
-.rivet-transcript {
+.rhotic-transcript {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
@@ -249,23 +363,23 @@ footer, .gradio-container footer { display: none !important; }
   padding: 0.25rem;
   margin-top: 1rem;
 }
-.rivet-transcript:empty::before {
+.rhotic-transcript:empty::before {
   content: 'Your practice turns will appear here.';
   display: block;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   opacity: 0.4;
   font-size: 0.875rem;
   text-align: center;
   padding: 2rem 0;
 }
-.rivet-transcript::-webkit-scrollbar { width: 6px; }
-.rivet-transcript::-webkit-scrollbar-thumb {
-  background: var(--rivet-mist);
+.rhotic-transcript::-webkit-scrollbar { width: 6px; }
+.rhotic-transcript::-webkit-scrollbar-thumb {
+  background: var(--rhotic-mist);
   border-radius: 3px;
 }
-.rivet-transcript::-webkit-scrollbar-track { background: transparent; }
+.rhotic-transcript::-webkit-scrollbar-track { background: transparent; }
 
-.rivet-turn {
+.rhotic-turn {
   border-radius: 14px;
   padding: 0.75rem 1rem;
   display: flex;
@@ -274,60 +388,60 @@ footer, .gradio-container footer { display: none !important; }
   font-size: 0.9375rem;
   line-height: 1.45;
 }
-.rivet-turn.user {
-  background: var(--rivet-cream);
-  border: 1px solid var(--rivet-mist);
+.rhotic-turn.user {
+  background: var(--rhotic-cream);
+  border: 1px solid var(--rhotic-mist);
 }
-.rivet-turn.wren { background: var(--rivet-pink); }
-.rivet-turn .turn-icon {
+.rhotic-turn.wren { background: var(--rhotic-pink); }
+.rhotic-turn .turn-icon {
   font-size: 1rem;
   flex-shrink: 0;
   line-height: 1.45;
 }
-.rivet-turn .turn-content { color: var(--rivet-ink); flex: 1; }
-.rivet-turn.user .turn-content {
+.rhotic-turn .turn-content { color: var(--rhotic-ink); flex: 1; }
+.rhotic-turn.user .turn-content {
   font-family: 'Fraunces', serif;
   font-weight: 500;
 }
-.rivet-turn .turn-dot {
+.rhotic-turn .turn-dot {
   display: inline-block;
   width: 9px; height: 9px;
   border-radius: 50%;
   margin-left: 0.5rem;
   vertical-align: middle;
 }
-.rivet-turn .turn-dot.correct   { background: var(--rivet-butter); border: 1px solid #d9c280; }
-.rivet-turn .turn-dot.incorrect { background: var(--rivet-coral); }
-.rivet-turn .turn-dot.unclear   { background: var(--rivet-mist); border: 1px solid #ccd2d4; }
+.rhotic-turn .turn-dot.correct   { background: var(--rhotic-butter); border: 1px solid #d9c280; }
+.rhotic-turn .turn-dot.incorrect { background: var(--rhotic-coral); }
+.rhotic-turn .turn-dot.unclear   { background: var(--rhotic-mist); border: 1px solid #ccd2d4; }
 
 /* ---------------- Audio player styling ---------------- */
 .gradio-container .audio-container {
-  background: var(--rivet-cream) !important;
+  background: var(--rhotic-cream) !important;
   border-radius: 12px !important;
-  border: 1px solid var(--rivet-mist) !important;
+  border: 1px solid var(--rhotic-mist) !important;
 }
 
 /* ---------------- Footer ---------------- */
-.rivet-footer {
+.rhotic-footer {
   text-align: center;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   opacity: 0.5;
   font-size: 0.8125rem;
   padding-top: 1.5rem;
   margin-top: 2.5rem;
-  border-top: 1px solid var(--rivet-mist);
+  border-top: 1px solid var(--rhotic-mist);
 }
 
 /* ---------------- Modal (about) ---------------- */
-.rivet-modal-backdrop {
+.rhotic-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(27, 58, 75, 0.4);
   z-index: 9999;
   display: none;
   align-items: center; justify-content: center;
 }
-.rivet-modal-backdrop.open { display: flex; }
-.rivet-modal {
+.rhotic-modal-backdrop.open { display: flex; }
+.rhotic-modal {
   background: white;
   border-radius: 20px;
   padding: 2rem;
@@ -335,21 +449,21 @@ footer, .gradio-container footer { display: none !important; }
   width: 90%;
   box-shadow: 0 12px 48px rgba(0,0,0,0.2);
 }
-.rivet-modal h2 {
+.rhotic-modal h2 {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  color: var(--rivet-coral);
+  color: var(--rhotic-coral);
   margin: 0 0 0.5rem 0;
 }
-.rivet-modal p {
-  color: var(--rivet-ink);
+.rhotic-modal p {
+  color: var(--rhotic-ink);
   font-size: 0.9375rem;
   line-height: 1.6;
   margin: 0.5rem 0;
 }
-.rivet-modal-close {
+.rhotic-modal-close {
   margin-top: 1rem;
-  background: var(--rivet-coral);
+  background: var(--rhotic-coral);
   color: white;
   border: none;
   border-radius: 999px;
@@ -363,89 +477,89 @@ footer, .gradio-container footer { display: none !important; }
 .gradio-container input:focus-visible,
 .gradio-container a:focus-visible,
 .gradio-container [role="button"]:focus-visible {
-  outline: 2px solid var(--rivet-coral) !important;
+  outline: 2px solid var(--rhotic-coral) !important;
   outline-offset: 2px;
 }
 
 /* ---------------- Hide state bridges visually ---------------- */
-#rivet-state-bridge, #rivet-correct-bridge { display: none !important; }
+#rhotic-state-bridge, #rhotic-correct-bridge { display: none !important; }
 
 /* ---------------- Tighten internal Gradio spacing ---------------- */
-.gradio-container .block .label { font-weight: 500; color: var(--rivet-ink); opacity: 0.7; }
+.gradio-container .block .label { font-weight: 500; color: var(--rhotic-ink); opacity: 0.7; }
 .gradio-container .gap, .gradio-container .row, .gradio-container .column { gap: 0.75rem; }
 
 /* ================================================================
    CURRICULUM PROGRESS BAR
    ================================================================ */
-#rivet-progress-wrap {
+#rhotic-progress-wrap {
   margin: 0 0 1.5rem 0;
 }
-.rivet-progress-bar {
-  background: var(--rivet-pink);
+.rhotic-progress-bar {
+  background: var(--rhotic-pink);
   border-radius: 16px;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-.rivet-level-info {
+.rhotic-level-info {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
   flex-wrap: wrap;
 }
-.rivet-level-label {
+.rhotic-level-label {
   font-family: 'League Spartan', sans-serif;
   font-weight: 700;
   font-size: 1.0625rem;
-  color: var(--rivet-coral);
+  color: var(--rhotic-coral);
 }
-.rivet-desc {
+.rhotic-desc {
   font-size: 0.875rem;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   opacity: 0.65;
 }
-.rivet-xp-row {
+.rhotic-xp-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-.rivet-xp {
+.rhotic-xp {
   font-weight: 700;
   font-size: 0.9375rem;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
 }
-.rivet-streak {
-  background: var(--rivet-amber-light);
-  color: var(--rivet-amber);
+.rhotic-streak {
+  background: var(--rhotic-amber-light);
+  color: var(--rhotic-amber);
   font-size: 0.8125rem;
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
 }
-.rivet-progress-track {
+.rhotic-progress-track {
   background: rgba(15, 42, 77, 0.1);
   border-radius: 999px;
   height: 8px;
   overflow: hidden;
 }
-.rivet-progress-fill {
+.rhotic-progress-fill {
   height: 100%;
-  background: var(--rivet-coral);
+  background: var(--rhotic-coral);
   border-radius: 999px;
   transition: width 0.4s ease;
 }
-.rivet-progress-label {
+.rhotic-progress-label {
   font-size: 0.75rem;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
   opacity: 0.55;
 }
 
 /* ================================================================
    LEVEL-UP NOTIFICATION
    ================================================================ */
-#rivet-levelup-wrap:empty { display: none; }
-.rivet-levelup {
+#rhotic-levelup-wrap:empty { display: none; }
+.rhotic-levelup {
   background: linear-gradient(135deg, #2563EB 0%, #7c3aed 100%);
   color: white;
   border-radius: 16px;
@@ -456,21 +570,21 @@ footer, .gradio-container footer { display: none !important; }
   gap: 0.3rem;
   text-align: center;
   margin: 0 0 1.25rem 0;
-  animation: rivet-levelup-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: rhotic-levelup-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@keyframes rivet-levelup-pop {
+@keyframes rhotic-levelup-pop {
   from { transform: scale(0.85); opacity: 0; }
   to   { transform: scale(1);    opacity: 1; }
 }
-.rivet-levelup-icon { font-size: 1.75rem; }
-.rivet-levelup-text { font-weight: 700; font-size: 1.0625rem; }
-.rivet-levelup-desc { font-size: 0.875rem; opacity: 0.85; }
+.rhotic-levelup-icon { font-size: 1.75rem; }
+.rhotic-levelup-text { font-weight: 700; font-size: 1.0625rem; }
+.rhotic-levelup-desc { font-size: 0.875rem; opacity: 0.85; }
 
 /* ================================================================
    EXERCISE TYPE BADGES
    ================================================================ */
-.rivet-word-wrap { text-align: center; }
-.rivet-ex-badge {
+.rhotic-word-wrap { text-align: center; }
+.rhotic-ex-badge {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
@@ -480,268 +594,865 @@ footer, .gradio-container footer { display: none !important; }
   padding: 0.25rem 0.75rem;
   margin: 0.75rem 0 0.25rem 0;
 }
-.rivet-ex-badge.syllable {
-  background: var(--rivet-green-light);
-  color: var(--rivet-green);
+.rhotic-ex-badge.syllable {
+  background: var(--rhotic-green-light);
+  color: var(--rhotic-green);
 }
-.rivet-ex-badge.word {
-  background: var(--rivet-pink);
-  color: var(--rivet-coral);
+.rhotic-ex-badge.word {
+  background: var(--rhotic-pink);
+  color: var(--rhotic-coral);
 }
-.rivet-ex-badge.phrase {
-  background: var(--rivet-purple-light);
-  color: var(--rivet-purple);
+.rhotic-ex-badge.phrase {
+  background: var(--rhotic-purple-light);
+  color: var(--rhotic-purple);
 }
 
 /* ================================================================
    BUTTON ROW ("Hear it" + "Next →")
    ================================================================ */
-.rivet-btn-row {
+.rhotic-btn-row {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   margin-bottom: 0.5rem;
 }
-.rivet-btn-row > div,
-.rivet-btn-row > button { flex: 1; }
+.rhotic-btn-row > div,
+.rhotic-btn-row > button { flex: 1; }
 
 /* Hear-it button secondary style */
 #hear-btn {
-  background: var(--rivet-cream) !important;
-  color: var(--rivet-coral) !important;
-  border: 1.5px solid var(--rivet-coral) !important;
+  background: var(--rhotic-cream) !important;
+  color: var(--rhotic-coral) !important;
+  border: 1.5px solid var(--rhotic-coral) !important;
   font-weight: 600 !important;
 }
 #hear-btn:hover {
-  background: var(--rivet-pink) !important;
+  background: var(--rhotic-pink) !important;
 }
 
 /* ================================================================
    APPROACHING / SUCCESS state indicators in transcript
    ================================================================ */
-.rivet-turn .turn-dot.approaching {
-  background: var(--rivet-amber-light);
-  border: 1px solid var(--rivet-amber);
+.rhotic-turn .turn-dot.approaching {
+  background: var(--rhotic-amber-light);
+  border: 1px solid var(--rhotic-amber);
 }
 
 /* ================================================================
-   HOME VIEW — paper-card style matching the practice area
+   LEARN / TWISTER / PROFILE VIEWS — dark cards on dark bg
    ================================================================ */
 
-/* Header row keeps the wordmark + login button on one line */
-.rivet-header-row {
-  max-width: 940px;
-  margin: 0 auto 1.5rem auto;
-  align-items: center;
-  gap: 1rem;
+/* Welcome card — greeting strip at the top of the Learn view */
+.rhotic-welcome-card {
+  background: var(--rhotic-bg-card);
+  border-radius: 18px;
+  border: 1px solid var(--rhotic-border);
+  padding: 1.5rem 1.75rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
-.rivet-header-row > div:first-child { flex: 1; }
-.rivet-login-btn { flex: 0 0 auto !important; max-width: 200px; }
-.rivet-local-badge {
-  flex: 0 0 auto;
-  background: var(--rivet-pink);
-  color: var(--rivet-coral);
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.4rem 0.95rem;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  align-self: center;
-}
-.gradio-container .rivet-login-btn button,
-.gradio-container .rivet-login-btn button.primary,
-.gradio-container .rivet-login-btn .gr-button-primary {
-  background: var(--rivet-ink) !important;
-  color: white !important;
-  border-radius: 999px !important;
-  font-weight: 600 !important;
-  font-size: 0.82rem !important;
-  padding: 0.45rem 1rem !important;
-  letter-spacing: 0.01em !important;
-  box-shadow: none !important;
-  white-space: nowrap !important;
-}
-.gradio-container .rivet-login-btn button:hover {
-  background: var(--rivet-coral) !important;
-  transform: none !important;
-}
-
-/* Constrain the home and practice views so nothing stretches.
-   Home is wider so the 5-up level module grid breathes; practice
-   stays narrower to keep the word + coach focused. */
-.rivet-home {
-  max-width: 940px;
-  margin: 0 auto;
-}
-.rivet-practice {
-  max-width: 940px;
-  margin: 0 auto;
-}
-
-/* ── Welcome card — clean white paper, no gradient ── */
-.rivet-welcome-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 4px 24px var(--rivet-shadow);
-  padding: 2.5rem 2rem 2.25rem 2rem;
-  margin: 0 auto 1rem auto;
-  text-align: center;
-  border: none;
-  max-width: 680px;
-}
-.rivet-welcome-eyebrow {
-  font-family: 'League Spartan', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--rivet-coral);
-  margin-bottom: 0.5rem;
-}
-.rivet-welcome-name {
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
-  font-size: 2.5rem;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-  color: var(--rivet-ink);
-  margin-bottom: 0.6rem;
-}
-@media (max-width: 560px) {
-  .rivet-welcome-name { font-size: 2rem; }
-}
-.rivet-welcome-hint {
-  font-size: 0.95rem;
-  color: var(--rivet-ink);
-  opacity: 0.6;
-  max-width: 440px;
-  margin: 0 auto;
-  line-height: 1.55;
-}
-
-/* ── Resume card — same white paper, no dark theme ── */
-#rivet-resume-wrap:empty { display: none; }
-.rivet-resume-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 4px 24px var(--rivet-shadow);
-  padding: 1.25rem 1.5rem;
-  margin: 0 auto 0.75rem auto;
-  border: none;
-  max-width: 680px;
-}
-.rivet-resume-label {
+.rhotic-welcome-eyebrow {
   font-family: 'League Spartan', sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--rivet-coral);
-  margin-bottom: 0.55rem;
+  color: var(--rhotic-coral);
 }
-.rivet-resume-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-}
-.rivet-resume-level {
+.rhotic-welcome-name {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   letter-spacing: -0.01em;
-  color: var(--rivet-ink);
+  color: var(--rhotic-ink);
+}
+.rhotic-welcome-hint {
+  font-size: 0.88rem;
+  color: var(--rhotic-text-mute);
+}
+
+/* Resume card */
+#rhotic-resume-wrap:empty { display: none; }
+.rhotic-resume-card {
+  background: var(--rhotic-bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--rhotic-border);
+  padding: 1rem 1.25rem;
+  margin: 0 0 0.75rem 0;
+}
+.rhotic-resume-label {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rhotic-coral);
+  margin-bottom: 0.5rem;
+}
+.rhotic-resume-stats { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.rhotic-resume-level {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--rhotic-ink);
   margin-right: 0.25rem;
 }
-.rivet-resume-chip {
-  background: var(--rivet-pink);
-  color: var(--rivet-coral);
+.rhotic-resume-chip {
+  background: var(--rhotic-pink);
+  color: var(--rhotic-coral);
   padding: 0.3rem 0.8rem;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
 }
-.rivet-resume-btn {
-  margin: 0 auto 1.5rem auto !important;
-  max-width: 680px !important;
+.rhotic-resume-btn {
+  margin: 0 0 1.25rem 0 !important;
   width: 100% !important;
 }
-.rivet-resume-btn button {
+.rhotic-resume-btn button {
   width: 100% !important;
   border-radius: 999px !important;
   font-weight: 600 !important;
   padding: 0.85rem 1.5rem !important;
 }
 
-/* ── "Choose a level" title ── */
-.rivet-pick-title {
+/* Section title above the path / above each tab content */
+.rhotic-pick-title {
   font-family: 'League Spartan', sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--rivet-ink);
-  opacity: 0.55;
-  margin: 1.5rem 0 1rem 0;
+  color: var(--rhotic-text-mute);
+  margin: 1.25rem 0 0.75rem 0;
   text-align: center;
 }
 
-/* ── 5-up level module grid ──
-   Each module is a clickable card: graphic on top, name underneath.
-   The graphic is set per-card via the `--level-img` CSS variable,
-   injected from app.py with the Gradio-resolved asset URL. */
-.rivet-level-grid {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: 270px;
-  align-items: start;
-  gap: 0.9rem;
+/* ================================================================
+   PROFILE TAB
+   ================================================================ */
+.rhotic-profile-card {
+  background: var(--rhotic-bg-card);
+  border-radius: 20px;
+  border: 1px solid var(--rhotic-border);
+  padding: 1.75rem 1.75rem;
+  margin: 0 0 1rem 0;
+}
+.rhotic-profile-empty {
+  text-align: center;
+}
+.rhotic-profile-empty h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.6rem;
+  color: var(--rhotic-ink);
+  margin: 0 0 0.5rem 0;
+}
+.rhotic-profile-empty p {
+  color: var(--rhotic-text-mute);
+  font-size: 0.95rem;
+  max-width: 400px;
+  margin: 0 auto 1.25rem auto;
+  line-height: 1.55;
+}
+.rhotic-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.rhotic-profile-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--rhotic-coral);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+.rhotic-profile-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: var(--rhotic-ink);
+  margin: 0;
+}
+.rhotic-profile-handle {
+  font-size: 0.85rem;
+  color: var(--rhotic-text-mute);
+}
+.rhotic-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 0 0 1.5rem 0;
+}
+.rhotic-stat {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--rhotic-border);
+  border-radius: 14px;
+  padding: 0.85rem 0.75rem;
+  text-align: center;
+}
+.rhotic-stat .val {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--rhotic-coral);
+  line-height: 1.1;
+}
+.rhotic-stat .lbl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rhotic-text-mute);
+  margin-top: 0.3rem;
+}
+.rhotic-badges-title {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rhotic-text-mute);
+  margin: 0.5rem 0 0.75rem 0;
+}
+.rhotic-badges {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
+}
+.rhotic-badge {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--rhotic-border);
+  border-radius: 14px;
+  padding: 0.75rem 0.4rem;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--rhotic-text-mute);
+  font-weight: 600;
+}
+.rhotic-badge .icon {
+  font-size: 1.7rem;
+  display: block;
+  margin-bottom: 0.25rem;
+  filter: grayscale(1) opacity(0.45);
+}
+.rhotic-badge.earned {
+  background: var(--rhotic-pink);
+  border-color: rgba(59,130,246,0.35);
+  color: var(--rhotic-coral);
+}
+.rhotic-badge.earned .icon { filter: none; }
+
+/* ================================================================
+   TWISTER TAB
+   ================================================================ */
+.rhotic-twister-card {
+  background: var(--rhotic-bg-card);
+  border-radius: 20px;
+  border: 1px solid var(--rhotic-border);
+  padding: 1.75rem;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+.rhotic-twister-eyebrow {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rhotic-coral);
   margin-bottom: 0.5rem;
 }
-/* Force every direct child (the wrapper Gradio puts around each Button)
-   to the row height. Without this, the default grid stretch + Gradio's
-   internal flex wrappers push the buttons up to ~580px tall. */
-.rivet-level-grid > * {
-  min-width: 0 !important;
-  height: 270px !important;
-  max-height: 270px !important;
-  align-self: start !important;
+.rhotic-twister-text {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.8rem;
+  color: var(--rhotic-ink);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  margin: 0.5rem auto 0.6rem auto;
+  max-width: 540px;
 }
-.rivet-level-grid > * > * {
-  height: 100% !important;
+.rhotic-twister-meta {
+  font-size: 0.82rem;
+  color: var(--rhotic-text-mute);
 }
-.rivet-level-btn { width: 100% !important; height: 270px !important; }
 
-/* Level module styling lives in an inline <style> injected from app.py
-   (right next to the buttons). That keeps it co-located with the per-
-   card image URLs and guarantees it ships AFTER any bundled Gradio CSS
-   so we don't lose to specificity / SSR weirdness. See `_level_img_css`
-   in app.py. */
-
-/* ── Back-to-home button ── */
-.rivet-practice-top {
-  margin: 0 0 0.75rem 0;
+/* ================================================================
+   WINDING PATH — Duolingo-style level picker
+   ================================================================ */
+#rhotic-path-wrap { margin: 1rem auto 0.5rem auto; }
+.rhotic-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 2rem 0 1.5rem 0;
+  max-width: 540px;
+  margin: 0 auto;
 }
-.rivet-back-btn { max-width: 140px; }
-.rivet-back-btn button {
+.rhotic-path-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.rhotic-path-node.locked { cursor: not-allowed; }
+.rhotic-path-node:not(.locked):hover .rhotic-node-circle {
+  transform: translateY(-4px);
+  filter: brightness(1.05);
+}
+.rhotic-node-circle {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: var(--rhotic-coral);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 700;
+  border: 5px solid white;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25),
+              inset 0 -6px 0 rgba(0, 0, 0, 0.14);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.rhotic-path-node.done .rhotic-node-circle {
+  background: var(--rhotic-green);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.22),
+              inset 0 -5px 0 rgba(0, 0, 0, 0.14);
+}
+.rhotic-path-node.current .rhotic-node-circle {
+  background: var(--rhotic-coral);
+  box-shadow: 0 0 0 8px var(--rhotic-pink),
+              0 8px 24px rgba(37, 99, 235, 0.4),
+              inset 0 -6px 0 rgba(0, 0, 0, 0.16);
+  animation: rhotic-node-pulse 2.2s ease-in-out infinite;
+}
+@keyframes rhotic-node-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+.rhotic-path-node.open .rhotic-node-circle {
+  background: white;
+  color: var(--rhotic-coral);
+  border: 4px solid var(--rhotic-coral);
+  box-shadow: 0 4px 14px var(--rhotic-shadow),
+              inset 0 -4px 0 rgba(0, 0, 0, 0.05);
+}
+.rhotic-path-node.locked .rhotic-node-circle {
+  background: var(--rhotic-mist);
+  color: #94a3b8;
+  border: 4px solid white;
+  box-shadow: 0 2px 6px var(--rhotic-shadow),
+              inset 0 -4px 0 rgba(0, 0, 0, 0.05);
+}
+.rhotic-node-label {
+  margin-top: 0.7rem;
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--rhotic-ink);
+  text-align: center;
+  max-width: 200px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+.rhotic-node-sub {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rhotic-ink);
+  opacity: 0.55;
+  text-align: center;
+}
+.rhotic-path-node.current .rhotic-node-sub {
+  color: var(--rhotic-coral);
+  opacity: 1;
+}
+.rhotic-path-node.done .rhotic-node-sub {
+  color: var(--rhotic-green);
+  opacity: 0.85;
+}
+.rhotic-path-node.locked .rhotic-node-label,
+.rhotic-path-node.locked .rhotic-node-sub {
+  opacity: 0.45;
+}
+
+/* Hidden Gradio buttons used as click-bridges for path nodes */
+.rhotic-hidden-btn,
+.rhotic-hidden-row,
+.rhotic-bridge-hidden {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* XP / streak chips above the path */
+.rhotic-path-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0.25rem auto 0 auto;
+  max-width: 540px;
+}
+.rhotic-path-banner .chip {
+  background: var(--rhotic-pink);
+  color: var(--rhotic-coral);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 999px;
+}
+.rhotic-path-banner .chip.streak {
+  background: var(--rhotic-amber-light);
+  color: var(--rhotic-amber);
+}
+
+/* ================================================================
+   DEV PANEL — toggled by Shift+D
+   ================================================================ */
+#rhotic-dev-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(15, 42, 77, 0.45) !important;
+  z-index: 10000 !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+#rhotic-dev-modal.open { display: flex !important; }
+#rhotic-dev-modal .rhotic-dev-card {
   background: white !important;
-  border: 1px solid var(--rivet-mist) !important;
-  color: var(--rivet-ink) !important;
+  border-radius: 20px !important;
+  padding: 1.5rem 1.75rem 1.25rem 1.75rem !important;
+  max-width: 420px !important;
+  width: 92% !important;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+.rhotic-dev-card h2 {
+  font-family: 'League Spartan', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--rhotic-coral);
+  margin: 0 0 0.25rem 0;
+}
+.rhotic-dev-card p {
+  font-size: 0.85rem;
+  color: var(--rhotic-ink);
+  opacity: 0.6;
+  margin: 0 0 0.5rem 0;
+}
+.rhotic-dev-hint {
+  font-size: 0.72rem;
+  color: var(--rhotic-ink);
+  opacity: 0.45;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ── Back-to-path button (practice view top) ── */
+.rhotic-practice-top { margin: 0 0 1rem 0; }
+.rhotic-back-btn {
+  max-width: 160px !important;
+  flex: 0 0 auto !important;
+}
+.rhotic-back-btn button {
+  background: var(--rhotic-bg-card) !important;
+  border: 1px solid var(--rhotic-border) !important;
+  color: var(--rhotic-ink) !important;
   font-weight: 600 !important;
   border-radius: 999px !important;
-  padding: 0.5rem 1rem !important;
-  font-size: 0.9rem !important;
+  padding: 0.5rem 1.1rem !important;
+  font-size: 0.85rem !important;
+  white-space: nowrap !important;
 }
-.rivet-back-btn button:hover {
-  border-color: var(--rivet-coral) !important;
-  background: var(--rivet-pink) !important;
+.rhotic-back-btn button:hover {
+  border-color: var(--rhotic-coral) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* ── Responsive layouts ── */
-@media (max-width: 720px) {
-  .rivet-level-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Cap content width inside each view so the right side of the main
+   column has breathing room (mirrors Duolingo's centered content).  */
+.rhotic-learn,
+.rhotic-twister,
+.rhotic-profile,
+.rhotic-practice {
+  max-width: 920px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
 }
-@media (max-width: 420px) {
-  .rivet-level-grid { grid-template-columns: 1fr; }
+
+/* ── Responsive path on small screens ── */
+@media (max-width: 540px) {
+  .rhotic-path { gap: 1.25rem; padding: 1.25rem 0; }
+  .rhotic-node-circle { width: 92px; height: 92px; font-size: 2rem; }
 }
+
+/* ================================================================
+   MINIMAL PRACTICE VIEW — back-icon + progress on top, big blob in
+   the middle, Listen + big Record button at the bottom.
+   ================================================================ */
+
+/* Top row: back icon + progress bar side-by-side */
+.rhotic-practice-top {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  margin: 0 0 1rem 0 !important;
+}
+.rhotic-practice-top > *:first-child { flex: 0 0 auto !important; }
+.rhotic-practice-top > *:last-child  { flex: 1 1 auto !important; }
+.rhotic-practice-top #rhotic-progress-wrap { margin: 0 !important; }
+
+/* Compact back-arrow icon button */
+.rhotic-back-icon-btn {
+  flex: 0 0 auto !important;
+  max-width: 44px !important;
+  min-width: 44px !important;
+}
+.rhotic-back-icon-btn button {
+  background: var(--rhotic-bg-card) !important;
+  border: 1px solid var(--rhotic-border) !important;
+  color: var(--rhotic-ink) !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.rhotic-back-icon-btn button:hover {
+  border-color: var(--rhotic-coral) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Word display — centered, smaller than the path view */
+#rhotic-word-display {
+  display: block !important;
+  margin: 1.25rem 0 0 0 !important;
+  text-align: center !important;
+}
+#rhotic-word-display .rhotic-word-wrap { display: block !important; }
+#rhotic-word-display .rhotic-word {
+  font-size: 3.5rem !important;
+  color: var(--rhotic-ink) !important;
+  display: block !important;
+  text-align: center !important;
+}
+#rhotic-word-display .rhotic-ex-badge { margin-top: 0; }
+#rhotic-ipa-display { margin: 0.25rem 0 0 0; }
+#rhotic-ipa-display .rhotic-ipa {
+  color: var(--rhotic-text-mute) !important;
+  display: block !important;
+  text-align: center !important;
+}
+
+/* Hide audio widgets fully — we drive them via state events */
+.rhotic-audio-hidden {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ================================================================
+   PRACTICE ACTIONS — Listen (small ear) · Record (big mic) · Next (arrow)
+   Centered row, big mic is the focal point.
+   ================================================================ */
+.rhotic-actions-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.75rem !important;
+  margin: 2rem auto 0 auto !important;
+  padding: 0.5rem 0 !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Small circular icon buttons (Listen, Next) */
+.rhotic-icon-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--rhotic-bg-card);
+  border: 1.5px solid var(--rhotic-border);
+  color: var(--rhotic-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease,
+              background 0.15s ease, color 0.15s ease;
+  box-shadow: 0 2px 6px var(--rhotic-shadow);
+}
+.rhotic-icon-btn:hover {
+  border-color: var(--rhotic-coral);
+  color: var(--rhotic-coral);
+  transform: translateY(-1px);
+}
+.rhotic-icon-btn svg { width: 24px; height: 24px; }
+
+.rhotic-listen-circle { color: var(--rhotic-coral); border-color: var(--rhotic-coral); }
+.rhotic-listen-circle:hover { background: var(--rhotic-pink); }
+
+.rhotic-next-circle { color: var(--rhotic-text-mute); }
+
+/* Big circular Record button — center of action row */
+.rhotic-record-btn {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: var(--rhotic-coral);
+  color: white;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.4),
+              inset 0 -6px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.rhotic-record-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.rhotic-record-btn:active { transform: translateY(1px); }
+.rhotic-record-btn svg { width: 38px; height: 38px; }
+.rhotic-record-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+/* Recording state: red, pulsing — clearly says "tap me to stop". */
+.rhotic-record-btn.recording {
+  background: #DC2626;
+  box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.22),
+              0 12px 28px rgba(220, 38, 38, 0.45),
+              inset 0 -6px 0 rgba(0, 0, 0, 0.22);
+  animation: rhotic-record-pulse 1.4s ease-in-out infinite;
+}
+.rhotic-record-btn.recording::after,
+.rhotic-record-btn.thinking::after {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.rhotic-record-btn.recording::after {
+  content: 'TAP TO STOP';
+  color: #FCA5A5;
+}
+.rhotic-record-btn.thinking::after {
+  content: 'SCORING…';
+  color: var(--rhotic-text-mute);
+}
+@keyframes rhotic-record-pulse {
+  0%, 100% { box-shadow: 0 0 0 8px  rgba(220, 38, 38, 0.22),
+                          0 12px 28px rgba(220, 38, 38, 0.45),
+                          inset 0 -6px 0 rgba(0, 0, 0, 0.22); }
+  50%      { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0.10),
+                          0 14px 32px rgba(220, 38, 38, 0.55),
+                          inset 0 -6px 0 rgba(0, 0, 0, 0.22); }
+}
+.rhotic-record-btn.thinking {
+  background: var(--rhotic-text-mute);
+  cursor: wait;
+  animation: none;
+  box-shadow: 0 4px 14px var(--rhotic-shadow),
+              inset 0 -5px 0 rgba(0, 0, 0, 0.18);
+}
+@media (max-width: 540px) {
+  .rhotic-actions-row { gap: 1.2rem; }
+  .rhotic-record-btn { width: 80px; height: 80px; }
+  .rhotic-record-btn svg { width: 32px; height: 32px; }
+  .rhotic-icon-btn { width: 48px; height: 48px; }
+  .rhotic-icon-btn svg { width: 20px; height: 20px; }
+}
+
+/* Speech bubble — sits to the RIGHT of the blob, tail pointing left.
+   Force dark text on the white bubble (the dark theme's --rhotic-ink is
+   white, so we have to hardcode the readable color here). */
+.rhotic-bubble,
+.rhotic-bubble * {
+  color: #0F172A !important;
+}
+.rhotic-bubble {
+  position: relative !important;
+  background: white !important;
+  border-radius: 18px !important;
+  padding: 0.85rem 1.1rem !important;
+  font-family: 'Fraunces', serif !important;
+  font-size: 1rem !important;
+  line-height: 1.45 !important;
+  font-style: italic !important;
+  max-width: 280px !important;
+  margin: 0 !important;
+  box-shadow: 0 4px 18px var(--rhotic-shadow) !important;
+  transition: opacity 0.25s ease !important;
+}
+.rhotic-bubble::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 0 !important; height: 0 !important;
+  border-top: 9px solid transparent !important;
+  border-bottom: 9px solid transparent !important;
+  border-right: 12px solid white !important;
+  border-left: 0 !important;
+}
+.rhotic-bubble.hidden { opacity: 0 !important; pointer-events: none !important; }
+@media (max-width: 540px) {
+  .rhotic-bubble { max-width: 92% !important; }
+  .rhotic-bubble::before {
+    left: 50% !important;
+    top: -10px !important;
+    transform: translateX(-50%) !important;
+    border-right: 9px solid transparent !important;
+    border-left:  9px solid transparent !important;
+    border-bottom: 12px solid white !important;
+    border-top: 0 !important;
+  }
+}
+
+/* Dark-mode tweak: practice progress bar should sit cleanly on dark bg */
+.rhotic-progress-bar {
+  background: var(--rhotic-bg-card) !important;
+  border: 1px solid var(--rhotic-border) !important;
+}
+
+/* ================================================================
+   CELEBRATION MODAL — grey overlay + bottom-right blob + confetti
+   Triggered on correct answer or Shift+S. Press Enter to dismiss.
+   ================================================================ */
+#rhotic-celebrate-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.62) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 10001 !important;
+  display: none !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+}
+#rhotic-celebrate-modal.open { display: block !important; }
+
+.rhotic-celebrate-blob {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 2.5rem;
+  width: 260px;
+  height: 260px;
+  object-fit: contain;
+  z-index: 2;
+  animation: rhotic-celebrate-pop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes rhotic-celebrate-pop {
+  from { transform: scale(0.35) translateY(60px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+@media (max-width: 540px) {
+  .rhotic-celebrate-blob { width: 180px; height: 180px; right: 1rem; }
+}
+
+.rhotic-celebrate-text {
+  position: absolute;
+  bottom: 3rem;
+  left: 4rem;
+  z-index: 2;
+  animation: rhotic-celebrate-fadein 0.5s ease 0.15s both;
+}
+.rhotic-celebrate-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 3.5rem;
+  color: white;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.85rem 0;
+}
+.rhotic-celebrate-hint {
+  font-family: 'League Spartan', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 700;
+}
+@keyframes rhotic-celebrate-fadein {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 540px) {
+  .rhotic-celebrate-text { left: 1.5rem; bottom: 13rem; }
+  .rhotic-celebrate-title { font-size: 2.25rem; }
+}
+
+/* Confetti — many small rectangles falling, drawn in JS */
+.rhotic-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.rhotic-confetti-piece {
+  position: absolute;
+  top: -24px;
+  width: 10px;
+  height: 16px;
+  opacity: 0.95;
+  border-radius: 1px;
+  animation-name: rhotic-confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform;
+}
+@keyframes rhotic-confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(110vh) rotate(900deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rhotic-confetti-piece { animation: none; opacity: 0.5; }
+}
+

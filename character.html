@@ -1,142 +1,54 @@
-<div class="rivet-character-wrap">
-  <video id="rivet-video"
-         class="rivet-video"
-         autoplay loop muted playsinline
-         aria-label="Rho, the Rivet coach character"
-         poster="">
-    <source id="rivet-source" src="{{IDLE_URL}}" type="video/webm">
-    Your browser does not support the video tag.
-  </video>
-
-  <div id="rivet-bubble" class="rivet-bubble hidden" aria-live="polite">
-    Just a sec — getting ready...
+<div class="rhotic-character-wrap">
+  <div class="rhotic-blob-row">
+    <img id="rhotic-blob"
+         class="rhotic-blob"
+         src="{{BLOB_URL}}"
+         data-rhotic-idle="{{BLOB_URL}}"
+         data-rhotic-thinking="{{BLOB_THINKING_URL}}"
+         alt="Rho, the Rhotic coach character">
+    <div id="rhotic-bubble" class="rhotic-bubble hidden" aria-live="polite"></div>
   </div>
 
-  <div id="rivet-ready-badge" class="rivet-ready-badge hidden" aria-live="polite">
+  <div id="rhotic-ready-badge" class="rhotic-ready-badge hidden" aria-live="polite">
     Nice — ready for the next one? Tap <strong>Next →</strong>
   </div>
 </div>
 
 <style>
-.rivet-character-wrap {
+.rhotic-character-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 1rem 0 1.5rem 0;
+  position: relative;
+  gap: 0.75rem;
 }
-.rivet-video {
-  width: 260px;
-  height: 260px;
+.rhotic-blob-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.rhotic-blob {
+  width: 160px;
+  height: 160px;
   object-fit: contain;
-  background: transparent;
   display: block;
+  transition: transform 0.25s ease;
+  flex: 0 0 auto;
 }
-@media (max-width: 768px) {
-  .rivet-video { width: 220px; height: 220px; }
+.rhotic-blob.celebrating { animation: rhotic-blob-bounce 0.7s ease-in-out; }
+@keyframes rhotic-blob-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30%      { transform: translateY(-18px) scale(1.05); }
+  60%      { transform: translateY(0) scale(0.98); }
+}
+@media (max-width: 540px) {
+  .rhotic-blob { width: 130px; height: 130px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rivet-video { animation: none !important; }
+  .rhotic-blob.celebrating { animation: none !important; }
 }
 </style>
-
-<script>
-(function(){
-  const IDLE_URL = "{{IDLE_URL}}";
-  const CELEBRATIONS = {{CELEBRATIONS_JSON}};
-
-  const playIdle = () => {
-    const v = document.getElementById('rivet-video');
-    if (!v) return;
-    // Avoid pointless reload if already on idle.
-    if (v.dataset.current === 'idle') return;
-    v.dataset.current = 'idle';
-    v.loop = true;
-    v.src = IDLE_URL;
-    v.load();
-    v.play().catch(() => {});
-  };
-
-  const playCelebration = () => {
-    const v = document.getElementById('rivet-video');
-    if (!v || !CELEBRATIONS.length) return;
-    const pick = CELEBRATIONS[Math.floor(Math.random() * CELEBRATIONS.length)];
-    v.dataset.current = 'celebration';
-    v.loop = false;
-    v.src = pick;
-    v.load();
-    const onEnd = () => {
-      v.removeEventListener('ended', onEnd);
-      playIdle();
-    };
-    v.addEventListener('ended', onEnd);
-    v.play().catch(() => {});
-  };
-
-  // ---- Bubble + correct-bridge polling
-  const setBubble = (text) => {
-    const b = document.getElementById('rivet-bubble');
-    if (!b) return;
-    if (text && text.trim()) {
-      b.textContent = text;
-      b.classList.remove('hidden');
-    } else {
-      b.classList.add('hidden');
-    }
-  };
-
-  const setReadyBadge = (show) => {
-    const b = document.getElementById('rivet-ready-badge');
-    if (!b) return;
-    if (show) b.classList.remove('hidden');
-    else b.classList.add('hidden');
-  };
-
-  const watch = () => {
-    const bubbleBox  = document.getElementById('rivet-bubble-bridge');
-    const correctBox = document.getElementById('rivet-correct-bridge');
-    const readyBox   = document.getElementById('rivet-ready-bridge');
-    if (!bubbleBox || !correctBox || !readyBox) { setTimeout(watch, 200); return; }
-    const bubbleInput  = bubbleBox.querySelector('textarea, input');
-    const correctInput = correctBox.querySelector('textarea, input');
-    const readyInput   = readyBox.querySelector('textarea, input');
-    if (!bubbleInput || !correctInput || !readyInput) { setTimeout(watch, 200); return; }
-
-    let lastBubble = '', lastCorrect = '', lastReady = '';
-    const tick = () => {
-      if (bubbleInput.value !== lastBubble) {
-        lastBubble = bubbleInput.value;
-        setBubble(lastBubble);
-        if (lastBubble) {
-          clearTimeout(window._rhoBubbleHide);
-          window._rhoBubbleHide = setTimeout(() => setBubble(''), 12000);
-        }
-      }
-      if (correctInput.value !== lastCorrect) {
-        lastCorrect = correctInput.value;
-      }
-      if (readyInput.value !== lastReady) {
-        lastReady = readyInput.value;
-        setReadyBadge(lastReady === 'true');
-      }
-    };
-    setInterval(tick, 100);
-  };
-  watch();
-
-  // ---- Audio playback drives celebration: when Wren's audio ENDS
-  // and the correct-bridge says "true", play a random celebration.
-  const wireAudio = () => {
-    document.querySelectorAll('audio').forEach(a => {
-      if (a.dataset.rhoWired) return;
-      a.dataset.rhoWired = '1';
-      a.addEventListener('ended', () => {
-        const cBox = document.getElementById('rivet-correct-bridge');
-        const ci = cBox ? cBox.querySelector('textarea, input') : null;
-        const correct = ci && ci.value === 'true';
-        if (correct) playCelebration();
-      });
-    });
-  };
-  setInterval(wireAudio, 400);
-})();
-</script>

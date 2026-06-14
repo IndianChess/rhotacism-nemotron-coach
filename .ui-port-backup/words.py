@@ -116,21 +116,6 @@ XP_PER_CORRECT = 10
 XP_FIRST_TRY_BONUS = 5      # extra XP if correct on the first attempt
 ADVANCE_AFTER_CORRECT = 5   # consecutive correct to auto-advance level
 
-# XP required to unlock each level on the home path. Level 0 is always open.
-# Streak-based auto-advance during practice still works — these thresholds only
-# gate the level picker on the home view.
-LEVEL_UNLOCK_XP = {
-    0: 0,
-    1: 50,
-    2: 150,
-    3: 300,
-    4: 500,
-}
-
-
-def level_unlocked(level: int, xp: int) -> bool:
-    return xp >= LEVEL_UNLOCK_XP.get(level, 0)
-
 
 def find_word(name: str | None) -> dict | None:
     if not name:
@@ -151,11 +136,6 @@ def get_next_word(
         explicit_level: If provided, override the automatic progression and
                         pick from this curriculum level (0–4).
     """
-    if explicit_level == 0 and not history:
-        for e in EXERCISES:
-            if e["word"] == "re":
-                return e
-
     if explicit_level is not None:
         target_diff = max(0, min(4, explicit_level))
     else:
