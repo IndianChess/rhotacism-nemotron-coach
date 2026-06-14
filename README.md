@@ -1,5 +1,5 @@
 ---
-title: Rivet R Coach
+title: Rhotic
 emoji: 🌀
 colorFrom: pink
 colorTo: yellow
@@ -20,7 +20,7 @@ tags:
   - codex
 ---
 
-# 🌀 Rivet R Coach
+# 🌀 Rhotic
 
 A **practical, on-device speech-therapy coach** for the English /r/ sound — the most-mispronounced consonant in American English and the #1 reason kids get pulled out for speech therapy.
 
@@ -36,7 +36,7 @@ Open the app, say a word into your mic, and a real audio pipeline tells you — 
 
 ## The idea
 
-About 1 in 20 kids — and a long tail of adults — can't make a clean American /r/. Speech therapy works, but it's expensive and most practice happens at home with zero feedback. Rivet R Coach is the "alone-at-home-with-feedback" part: small models, real audio analysis, and a warm coach that runs on your laptop.
+About 1 in 20 kids — and a long tail of adults — can't make a clean American /r/. Speech therapy works, but it's expensive and most practice happens at home with zero feedback. Rhotic is the "alone-at-home-with-feedback" part: small models, real audio analysis, and a warm coach that runs on your laptop.
 
 ## How it works
 
