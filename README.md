@@ -10,7 +10,7 @@ app_file: app.py
 pinned: false
 license: mit
 hf_oauth: true
-short_description: Practice the English /r/ sound with a real on-device coach — wav2vec2 phonemes, Praat formants, Nemotron feedback.
+short_description: On-device English /r/ speech coach
 tags:
   - backyard-ai
   - off-brand
