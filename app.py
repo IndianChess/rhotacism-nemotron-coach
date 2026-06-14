@@ -444,14 +444,20 @@ def _user_msg(word: str) -> dict:
 # Coach + TTS helpers
 # ---------------------------------------------------------------------------
 
+_INTRO_TEMPLATES = {
+    "syllable": "Let's start with '{target}'. Curl your tongue back as you say it.",
+    "phrase":   "Try the phrase: '{target}'. Keep that R strong all the way through.",
+    "word":     "Let's try '{target}'. Take your time with the R.",
+}
+
+
 def _intro_for_word(current_word: dict, history: list, messages: list):
-    state = {
-        "current_target_word": current_word["word"],
-        "exercise_type": current_word.get("type", "word"),
-        "history": history,
-    }
-    result = coach_turn(state, None, None)
-    reply = result["spoken_reply"]
+    # The intro is shown the instant a level is picked, so it must be fast.
+    # The LLM coach still runs on the feedback turn after the user records,
+    # which is where it adds real value.
+    exercise_type = current_word.get("type", "word")
+    template = _INTRO_TEMPLATES.get(exercise_type, _INTRO_TEMPLATES["word"])
+    reply = template.format(target=current_word["word"])
     sr, audio = tts_mod.synthesize_full(reply)
     new_messages = messages + [_wren_msg(reply)]
     return reply, (sr, audio), new_messages
@@ -1460,13 +1466,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
         return;
       }
     }
-    // Shift+S manually triggers celebration (during practice / for demo)
-    if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
-      const tag = (e.target && e.target.tagName) || '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      e.preventDefault();
-      showCelebration();
-    }
+    // Shift+S celebration shortcut intentionally disabled in the main build.
   });
   // Watch celebrate_bridge for server-triggered celebrations.
   function watchCelebrate() {
@@ -1557,22 +1557,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
     }
   }, 100);
 
-  // Shift+D toggles the dev panel. Ignored when focus is in a text field.
-  document.addEventListener('keydown', function(e) {
-    if (!e.shiftKey) return;
-    if (e.key !== 'D' && e.key !== 'd') return;
-    const tag = (e.target && e.target.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    e.preventDefault();
-    const m = document.getElementById('rhotic-dev-modal');
-    if (m) m.classList.toggle('open');
-  });
-
-  // Click backdrop (not the card) to close.
-  document.addEventListener('click', function(e) {
-    const m = document.getElementById('rhotic-dev-modal');
-    if (m && e.target === m) m.classList.remove('open');
-  });
+  // Shift+D dev-panel toggle intentionally disabled in the main build.
 }
 """,
     )
