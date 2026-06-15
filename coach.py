@@ -334,11 +334,6 @@ def _chat_local(messages: list[dict]) -> str:
 def preload() -> None:
     """Force-load whichever backend we're configured for. Safe to call twice."""
     if BACKEND == "local":
-        if ZERO_GPU:
-            # GPU isn't allocated at import time on Zero GPU; defer the load
-            # to the first @spaces.GPU call (slower first turn, works at all).
-            print("[coach] Zero GPU detected — deferring model load to first call.")
-            return
         _get_local_llm()
     else:
         # Router path doesn't really preload — but probe the token now so we

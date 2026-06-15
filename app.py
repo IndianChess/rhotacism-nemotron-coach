@@ -648,7 +648,6 @@ def on_hear_it(current_word):
     return (sr, audio)
 
 
-@coach.spaces.GPU(duration=120)
 def on_submit(audio_path, current_word, history, messages,
               level, xp, streak, best_streak, username,
               profile: gr.OAuthProfile | None):
