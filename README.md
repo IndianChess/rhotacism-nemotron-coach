@@ -18,15 +18,23 @@ tags:
   - best-demo
   - nemotron
   - codex
+  - track:backyard
+  - sponsor:openai
+  - sponsor:nvidia
+  - achievement:offgrid
+  - achievement:offbrand
+  - achievement:llama
+  - achievement:fieldnotes
 ---
 
 # 🌀 Rhotic
 
-A **practical, on-device speech-therapy coach** for the English /r/ sound — the most-mispronounced consonant in American English and the #1 reason kids get pulled out for speech therapy.
+An on-device speech coach for the English /r/ sound.
 
-Open the app, say a word into your mic, and a real audio pipeline tells you — instantly — whether your "R" actually landed and *exactly* what to move next.
+You open the app, say a word into your mic, and get back two things: a real acoustic readout of whether your "R" landed, and a short spoken note telling you what to fix next.
 
-**Track:** Backyard AI · **Sponsor prizes targeted:** NVIDIA Nemotron Hardware Prize · OpenAI Best Use of Codex
+**Track:** Backyard AI
+**Sponsor prizes targeted:** NVIDIA Nemotron Hardware Prize, OpenAI Best Use of Codex
 
 🎥 **Demo video:** <!-- TODO: paste YouTube/Loom link --> `<DEMO_VIDEO_URL>`
 🐦 **Social post:** <!-- TODO: paste X/LinkedIn link --> `<SOCIAL_POST_URL>`
@@ -34,9 +42,9 @@ Open the app, say a word into your mic, and a real audio pipeline tells you — 
 
 ---
 
-## The idea
+## Why this exists
 
-About 1 in 20 kids — and a long tail of adults — can't make a clean American /r/. Speech therapy works, but it's expensive and most practice happens at home with zero feedback. Rhotic is the "alone-at-home-with-feedback" part: small models, real audio analysis, and a warm coach that runs on your laptop.
+About 1 in 20 kids can't make a clean American /r/, and a lot of adults can't either. Speech therapy works, but it's expensive, and the part that actually moves the needle (daily practice at home) usually happens with zero feedback. Most home-practice apps just show flashcards. Rhotic is the missing feedback loop.
 
 ## How it works
 
@@ -45,12 +53,12 @@ About 1 in 20 kids — and a long tail of adults — can't make a clean American
    ├── wav2vec2 phoneme model  →  IPA transcription
    ├── Praat (parselmouth)     →  F3 formant in Hz (the acoustic fingerprint of /r/)
    ├── scoring.py              →  correct / approaching / w-substitution / omission / distortion
-   └── Nemotron-3-Nano-4B      →  spoken feedback ("Curl your tongue further back…")
+   └── Nemotron-3-Nano-4B      →  spoken feedback ("Curl your tongue further back...")
                                 ↓
                        🔊 pocket-tts (on-device voice)
 ```
 
-Every model in the pipeline runs **locally**. No mic audio ever leaves the machine; the LLM coach stays on-device too.
+Every model runs locally. No mic audio leaves the machine. The LLM coach stays on-device too.
 
 ## Models used (all ≤32B ✓)
 
@@ -60,16 +68,16 @@ Every model in the pipeline runs **locally**. No mic audio ever leaves the machi
 | Coach LLM | `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` (Q4_K_M) | 4 B | local (llama.cpp) |
 | Voice (TTS) | `pocket-tts` | ~250 M | local |
 
-Largest model used: 4 B parameters. The full pipeline stays comfortably within the Build Small cap and fits the Tiny Titan spirit.
+Largest model in the pipeline: 4 B parameters. Total footprint sits well under the Build Small cap and fits the Tiny Titan brief.
 
 ## Features
 
-- **Five curriculum levels:** Syllables → Starting Words → Middle/End → Phrases → Twisters
-- **Daily tongue twister** (rotates by date — same one for everyone, every day)
-- **Streaks, XP, level-ups** with auto-advance after 5 consecutive correct
-- **Custom UI** — no default Gradio chrome; sidebar nav, level path, blob coach character, profile view
-- **HF OAuth + persistent progress** via a private HF Dataset (`IndianChess/rivet-progress`)
-- **Local Nemotron coach** — llama.cpp-powered feedback from a 4 B model
+- Five curriculum levels: Syllables, Starting Words, Middle/End, Phrases, Twisters
+- Daily tongue twister that rotates by date (everyone gets the same one each day)
+- Streaks, XP, level-ups, with auto-advance after 5 in a row
+- Custom UI with no default Gradio chrome: sidebar nav, level path, blob coach character, profile view
+- HF OAuth and persistent progress via a private HF Dataset (`IndianChess/rivet-progress`)
+- Local Nemotron coach running through llama.cpp
 
 ## Run locally
 
@@ -85,15 +93,15 @@ cp .env.example .env                # optional: add HF_TOKEN for OAuth progress 
 .venv/bin/python app.py             # opens on http://127.0.0.1:7860
 ```
 
-> ⏳ **First boot downloads ~3 GB** — wav2vec2 (~315 MB) + Nemotron GGUF (~2.84 GB) + pocket-tts (~250 MB) cache into `~/.cache/huggingface/hub/`. Subsequent boots are instant.
+> ⏳ **First boot downloads ~3 GB.** wav2vec2 (~315 MB), Nemotron GGUF (~2.84 GB), and pocket-tts (~250 MB) get cached into `~/.cache/huggingface/hub/`. Every boot after the first is instant.
 
 ## Coach backend
 
-Rhotic uses `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` locally through llama.cpp. The Q4_K_M quant is 2.84 GB on disk, runs on Metal/CUDA/CPU depending on the host, and keeps the coach model at 4 B parameters.
+Rhotic loads `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` locally through llama.cpp. The Q4_K_M quant is 2.84 GB on disk and runs on Metal, CUDA, or CPU depending on the host.
 
-On Apple Silicon, warm coach turns land in a couple of seconds. The first turn after boot is slower (prefill). On Zero GPU, the model loads inside the GPU-allocated call.
+On Apple Silicon, warm coach turns come back in a couple of seconds. The first turn after boot is slower because of prefill. On Zero GPU, the model loads inside the GPU-allocated call.
 
-Override the GGUF source if you want a different quant:
+You can swap the GGUF if you want a different quant:
 
 ```bash
 COACH_BACKEND=local \
@@ -106,47 +114,46 @@ python app.py
 
 1. Create a new Space inside the **Build Small hackathon org** with `SDK = Gradio`.
 2. Push this repo to the Space's git remote.
-3. **Add `HF_TOKEN` as a Space secret** (Settings → Variables and secrets):
-   - Get a read token at <https://huggingface.co/settings/tokens>
-   - Required for OAuth progress sync. The app will boot without it; progress becomes session-only.
+3. Add `HF_TOKEN` as a Space secret (Settings → Variables and secrets):
+   - Grab a read token at <https://huggingface.co/settings/tokens>.
+   - It's required for OAuth progress sync. The app still boots without it, but progress goes session-only.
 
 ## Building your own word list
 
-`words.py` ships with dictionary IPA. For sharper phoneme matching, drop your own reference recordings into `recordings/<word>.wav` and run:
+`words.py` ships with dictionary IPA. If you want sharper phoneme matching, drop your own reference recordings into `recordings/<word>.wav` and run:
 
 ```bash
 python build_word_list.py
 ```
 
-It transcribes each recording with the same wav2vec2 model the app uses and lets you confirm or edit the IPA before saving.
+It transcribes each recording with the same wav2vec2 model the app uses, then lets you confirm or edit the IPA before saving.
 
 ---
 
 ## Field notes
 
-Common questions about the build.
+Things people have asked while I was building it.
 
 **Does it work offline?**
-Yes. Nemotron runs in-process via llama.cpp. wav2vec2 and pocket-tts are on-device too, so speech practice stays local.
+Yes. Nemotron runs in-process via llama.cpp, and wav2vec2 plus pocket-tts are on-device, so the whole practice loop is local.
 
 **Why /r/?**
-American /r/ is the single most-mispronounced consonant in English. Kids who can't produce it get pulled into speech therapy more often than for any other phoneme. Most existing home-practice tools just show flashcards — no acoustic feedback, no progression.
+American /r/ is the most-mispronounced consonant in English, and kids who can't produce it get pulled into speech therapy more than for any other phoneme. Most home tools just show flashcards. No acoustic feedback, no progression.
 
-**Is the scoring real, or just a vibe?**
-Real. wav2vec2 produces an IPA phoneme string for the recording; Praat (via `parselmouth`) extracts the third formant (F3) from the vowel; the scorer checks whether F3 dipped low enough — the acoustic signature of a retroflex /r/. The F3 check is what catches the classic "wabbit-for-rabbit" substitution that flashcard apps miss.
+**Is the scoring real, or just vibes?**
+Real. wav2vec2 produces an IPA phoneme string for the recording, Praat (via `parselmouth`) extracts the third formant (F3) from the vowel, and the scorer checks whether F3 dipped low enough. A low F3 is the acoustic signature of a retroflex /r/, and that's what catches the classic "wabbit-for-rabbit" substitution that flashcard apps miss entirely.
 
 **Why Nemotron-3-Nano-4B for the coach?**
-Small enough to fit on a free CPU Space (2.84 GB at Q4_K_M), fast enough on Apple Silicon to feel live, and tuned well enough for instruction-following that the coach stays specific ("curl your tongue back further") instead of generic ("good try!"). It's the sweet spot model for this exact UX.
+Small enough to fit on a free CPU Space (2.84 GB at Q4_K_M), fast enough on Apple Silicon to feel live, and good enough at instruction-following that the coach gives you something specific ("curl your tongue back further") instead of "good try!". For this UX, that's the right size.
 
 **How small is the total footprint?**
-~3.4 GB on disk. The largest model is the 4 B Nemotron coach; the other models are hundreds of millions of parameters. The app comfortably clears the hackathon's 32 B cap and is aimed at the Tiny Titan badge.
+~3.4 GB on disk. The biggest model is the 4 B Nemotron coach; the other two are in the hundreds of millions. Well under the hackathon's 32 B cap, aimed at Tiny Titan.
 
 **Why a custom UI instead of default Gradio?**
-Default Gradio reads as a developer tool. For a daily-use app aimed at kids and adults practicing alone, the UI had to feel like a friendly product — sidebar nav, a level path with locked checkpoints, a blob coach character, a profile view with streak/XP, and a daily Twister tab. Every visible surface was rebuilt in CSS + Gradio HTML primitives.
+Default Gradio reads like a developer tool. For something kids and adults are going to open every day, the UI had to feel like a product: sidebar nav, a level path with locked checkpoints, a blob character that reacts, a profile with streak and XP, a daily Twister tab. Every visible surface was rebuilt in CSS and Gradio HTML primitives.
 
-**Can a parent or SLP use this clinically?**
-No. It's a practice tool, not a clinical instrument. Treat it as homework between SLP sessions, not as a replacement for one.
-
+**Can an SLP use this clinically?**
+No. It's a practice tool, not a clinical instrument. Use it as homework between sessions, not as a replacement for one.
 
 ---
 
@@ -156,4 +163,4 @@ This is a practice tool, not a substitute for a licensed speech-language patholo
 
 ---
 
-Built for the **Hugging Face × Gradio Build Small Hackathon**, June 2026 · Backyard AI track · targeting the NVIDIA Nemotron Hardware Prize and the OpenAI Codex prize.
+Built for the **Hugging Face × Gradio Build Small Hackathon**, June 2026. Backyard AI track. Targeting the NVIDIA Nemotron Hardware Prize and the OpenAI Codex prize.
