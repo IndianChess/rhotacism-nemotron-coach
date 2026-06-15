@@ -8,10 +8,9 @@ praat-parselmouth==0.4.7
 phonemizer==3.3.0
 python-dotenv==1.2.2
 pocket-tts==2.1.0
-# Local coach backend (COACH_BACKEND=local). CUDA 12.1 wheel for ZeroGPU.
-# For CPU-tier Spaces or local dev, drop the cu121 extra-index line and
-# llama-cpp-python will fall back to its CPU wheel from PyPI.
---extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+# Local coach backend (COACH_BACKEND=local). Use the CPU wheel on Spaces
+# because the ZeroGPU base image does not expose libcudart to llama.cpp.
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 llama-cpp-python==0.3.28
 
 # ZeroGPU runtime
