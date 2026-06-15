@@ -1383,23 +1383,44 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
   // We also flip the visual state immediately for instant feedback;
   // the state_bridge watcher will reconcile shortly after.
   window.rhoticToggleMic = function() {
+    const recBtn = document.getElementById('rhotic-record-btn');
+    // Block taps while the model is scoring — Gradio audio is busy too.
+    if (recBtn && recBtn.classList.contains('thinking')) return;
+    // Debounce: a rapid double-fire (touch+click on mobile, accidental
+    // double-tap) would otherwise stop the recording and immediately start
+    // a new one, discarding what the user just said.
+    const now = Date.now();
+    if (window.__rhoLastToggle && now - window.__rhoLastToggle < 400) return;
+    window.__rhoLastToggle = now;
+
     // Either the Practice mic ('user-mic') or the Twister mic is mounted
     // at any given time; one of them will be in the DOM.
     const wrap = document.getElementById('user-mic')
               || document.getElementById('twister-mic');
     if (!wrap) return;
-    const inner =
-      wrap.querySelector('button.record-button') ||
-      wrap.querySelector('button[aria-label*="record" i]') ||
-      wrap.querySelector('button[aria-label*="stop" i]') ||
-      wrap.querySelector('button');
+
+    // Pick the button by intent. When idle we want the "record" button;
+    // when already recording we want the "stop" button. Falling back to
+    // querySelector('button') would risk hitting a cancel/discard button
+    // mid-recording, which silently throws away the user's audio and
+    // restarts the widget — the exact bug we are fixing here.
+    const isRecording = recBtn && recBtn.classList.contains('recording');
+    let inner;
+    if (isRecording) {
+      inner =
+        wrap.querySelector('button[aria-label*="stop" i]') ||
+        wrap.querySelector('button.stop-button') ||
+        wrap.querySelector('button.record-button');
+    } else {
+      inner =
+        wrap.querySelector('button[aria-label*="record" i]') ||
+        wrap.querySelector('button.record-button');
+    }
     if (!inner) return;
-    const recBtn = document.getElementById('rhotic-record-btn');
-    // Block taps while the model is scoring — Gradio audio is busy too.
-    if (recBtn && recBtn.classList.contains('thinking')) return;
+
     inner.click();
     if (recBtn) {
-      if (recBtn.classList.contains('recording')) {
+      if (isRecording) {
         recBtn.classList.remove('recording');
         setRecordIcon(recBtn, 'idle');
       } else {
