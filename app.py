@@ -1290,7 +1290,13 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
                 gr.update(interactive=False), "thinking")
 
     def _unlock():
-        return (gr.update(interactive=True), gr.update(interactive=True),
+        # Clear the captured audio so the widget snaps back to its empty
+        # record state. Without value=None, Gradio shows playback controls
+        # instead of the record button, so the next tap on the custom
+        # Record button can't find a record-button to click and the user
+        # is stuck unable to retry the same word.
+        return (gr.update(interactive=True, value=None),
+                gr.update(interactive=True),
                 gr.update(interactive=True), "idle")
 
     lock_outputs   = [mic, hear_btn, next_btn, state_bridge]
@@ -1331,8 +1337,10 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
                 "thinking")
 
     def _twister_unlock():
-        return (gr.update(interactive=True), gr.update(interactive=True),
-                "idle")
+        # Same fix as the Practice _unlock — clear the captured audio so
+        # the record button comes back and the user can retry the twister.
+        return (gr.update(interactive=True, value=None),
+                gr.update(interactive=True), "idle")
 
     _twister_lock_outs = [twister_mic, twister_hear_btn, state_bridge]
 
