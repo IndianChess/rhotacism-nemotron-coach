@@ -151,8 +151,6 @@ Default Gradio reads as a developer tool. For a daily-use app aimed at kids and 
 **Can a parent or SLP use this clinically?**
 No. It's a practice tool, not a clinical instrument. Treat it as homework between SLP sessions, not as a replacement for one.
 
-**Is there a demo version?**
-A parallel build at `IndianChess/rivet-demo` runs the same audio pipeline but swaps Nemotron for a curated preset reply library — instant coach turns, predictable for live judging. This Space is the real build with the LLM in the loop.
 
 ---
 
