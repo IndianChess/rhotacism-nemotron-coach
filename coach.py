@@ -318,14 +318,8 @@ def _chat_router(messages: list[dict]) -> str:
     return resp.choices[0].message.content
 
 
-@spaces.GPU(duration=120)
 def _chat_local(messages: list[dict]) -> str:
-    """One JSON-mode round trip to the locally-loaded GGUF model.
-
-    On Zero GPU the GPU is allocated for the duration of this call; the model
-    is loaded on first invocation and cached for subsequent calls within the
-    same process.
-    """
+    """One JSON-mode round trip to the locally-loaded GGUF model."""
     llm = _get_local_llm()
     resp = llm.create_chat_completion(
         messages=messages,
