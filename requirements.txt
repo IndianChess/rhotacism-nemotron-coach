@@ -2,7 +2,7 @@ gradio[oauth]==5.50.0
 openai==2.36.0
 huggingface_hub==1.14.0
 transformers==5.8.1
-torch==2.12.0
+torch==2.11.0
 librosa==0.11.0
 soundfile==0.13.1
 praat-parselmouth==0.4.7
