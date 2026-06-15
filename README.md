@@ -66,10 +66,10 @@ Every model runs locally. No mic audio leaves the machine. The LLM coach stays o
 |---|---|---|---|
 | Phoneme transcription | `vitouphy/wav2vec2-xls-r-300m-phoneme` | ~315 M | local |
 | Coach LLM (Tiny Titan mode) | `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` (Q4_K_M) | 4 B | local (llama.cpp) |
-| Coach LLM (hosted Space) | `nvidia/Llama-3.1-Nemotron-Nano-8B-v1` | 8 B | HF Inference router |
+| Coach LLM (hosted Space) | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16` | 30 B (MoE, ~3 B active) | HF Inference router |
 | Voice (TTS) | `pocket-tts` | ~250 M | local |
 
-> ⚠️ **About the hosted Space right now:** the public Space is using the **HF Inference router (8 B Nemotron)** for coach replies because the CPU-tier Space can't run the 4 B GGUF in-process fast enough (~5 min per turn, sometimes broken). Flip `COACH_BACKEND=local` to use the **4 B local model**, which is what qualifies the project for the Tiny Titan badge. See "Coach backend" below.
+> ⚠️ **About the hosted Space right now:** the public Space is using the **HF Inference router (`Nemotron-3-Nano-30B-A3B`, MoE with ~3 B active params)** for coach replies because the CPU-tier Space can't run the 4 B GGUF in-process fast enough (~5 min per turn, sometimes broken). Flip `COACH_BACKEND=local` to use the **4 B local model**, which is what qualifies the project for the Tiny Titan badge. See "Coach backend" below.
 
 Largest model in the local Tiny Titan pipeline: 4 B parameters. Both modes stay well under the Build Small 32 B cap.
 
@@ -103,7 +103,7 @@ cp .env.example .env                # optional: add HF_TOKEN for OAuth progress 
 Two modes, picked by the `COACH_BACKEND` env var:
 
 **`router` (default, used by the hosted Space)**
-Calls `nvidia/Llama-3.1-Nemotron-Nano-8B-v1` through the HF Inference router. Needs `HF_TOKEN` set (Space secret, or `.env` locally). Fast and reliable, but pulls inference off-device, so this mode does *not* qualify for the Tiny Titan badge.
+Calls `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16` through the HF Inference router. It's a 30 B MoE with ~3 B active params, so it fits under the Build Small 32 B cap. Needs `HF_TOKEN` set (Space secret, or `.env` locally). Fast and reliable, but pulls inference off-device, so this mode does *not* qualify for the Tiny Titan badge.
 
 **`local` (Tiny Titan mode)**
 Loads `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` in-process through llama.cpp. The Q4_K_M quant is 2.84 GB on disk and runs on Metal, CUDA, or CPU depending on the host. On Apple Silicon, warm coach turns come back in a couple of seconds. The first turn after boot is slower because of prefill. This is the mode that fits the 4 B Tiny Titan brief.

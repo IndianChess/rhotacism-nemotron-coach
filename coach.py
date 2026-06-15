@@ -61,7 +61,7 @@ if BACKEND not in {"router", "local"}:
 # --- router backend (HF Inference Providers) ---
 ROUTER_MODEL_ID = os.environ.get(
     "COACH_MODEL_ID",
-    "nvidia/Llama-3.1-Nemotron-Nano-8B-v1",
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
 )
 ROUTER_BASE_URL = "https://router.huggingface.co/v1"
 
