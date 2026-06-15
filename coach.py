@@ -30,6 +30,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Zero GPU detection. spaces.GPU is a no-op decorator when not on Zero GPU
+# hardware, but we still want to know whether we're running there so we can
+# skip the eager startup preload (the GPU isn't allocated at import time).
+ZERO_GPU = bool(os.environ.get("SPACES_ZERO_GPU"))
+try:
+    import spaces  # type: ignore
+    _HAS_SPACES = True
+except ImportError:
+    _HAS_SPACES = False
+    class _SpacesShim:
+        @staticmethod
+        def GPU(*_a, **_kw):
+            def deco(fn):
+                return fn
+            return deco
+    spaces = _SpacesShim()  # type: ignore
+
 # ---------------------------------------------------------------------------
 # Backend selection
 # ---------------------------------------------------------------------------
@@ -301,8 +318,14 @@ def _chat_router(messages: list[dict]) -> str:
     return resp.choices[0].message.content
 
 
+@spaces.GPU(duration=120)
 def _chat_local(messages: list[dict]) -> str:
-    """One JSON-mode round trip to the locally-loaded GGUF model."""
+    """One JSON-mode round trip to the locally-loaded GGUF model.
+
+    On Zero GPU the GPU is allocated for the duration of this call; the model
+    is loaded on first invocation and cached for subsequent calls within the
+    same process.
+    """
     llm = _get_local_llm()
     resp = llm.create_chat_completion(
         messages=messages,
@@ -317,6 +340,11 @@ def _chat_local(messages: list[dict]) -> str:
 def preload() -> None:
     """Force-load whichever backend we're configured for. Safe to call twice."""
     if BACKEND == "local":
+        if ZERO_GPU:
+            # GPU isn't allocated at import time on Zero GPU; defer the load
+            # to the first @spaces.GPU call (slower first turn, works at all).
+            print("[coach] Zero GPU detected — deferring model load to first call.")
+            return
         _get_local_llm()
     else:
         # Router path doesn't really preload — but probe the token now so we
