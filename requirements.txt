@@ -2,18 +2,17 @@ gradio[oauth]==5.50.0
 openai==2.36.0
 huggingface_hub==1.14.0
 transformers==5.8.1
-torch==2.11.0
 librosa==0.11.0
 soundfile==0.13.1
 praat-parselmouth==0.4.7
 phonemizer==3.3.0
 python-dotenv==1.2.2
 pocket-tts==2.1.0
-# Local coach backend (COACH_BACKEND=local). CUDA 12.1 wheel for Zero GPU.
-# Local Mac dev uses the regular PyPI wheel (Metal). For CPU-tier Spaces,
-# swap "cu121" back to "cpu".
+# Local coach backend (COACH_BACKEND=local). CUDA 12.1 wheel for ZeroGPU.
+# For CPU-tier Spaces or local dev, drop the cu121 extra-index line and
+# llama-cpp-python will fall back to its CPU wheel from PyPI.
 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
 llama-cpp-python==0.3.28
 
-# Zero GPU runtime
+# ZeroGPU runtime
 spaces
