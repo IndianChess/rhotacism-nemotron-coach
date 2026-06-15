@@ -57,6 +57,12 @@ import coach
 from coach import coach_turn
 from progress import load_progress, save_progress
 
+
+@coach.spaces.GPU(duration=5)
+def _zerogpu_registration_probe():
+    return "ready"
+
+
 # When COACH_BACKEND=local, pull the GGUF + warm the llama.cpp handle now
 # instead of paying the cost on the first user turn. Matches wav2vec2 and
 # pocket-tts above. Router backend is a no-op aside from a token sanity
