@@ -1193,8 +1193,8 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
             _sidebar_html("learn"),
         )
 
-    def on_tab_twister():
-        twister = todays_twister()
+    def on_tab_twister(level):
+        twister = todays_twister(level or 0)
         return (
             "twister",
             gr.update(visible=False),
@@ -1284,7 +1284,7 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
         on_tab_learn, inputs=None, outputs=tab_learn_outputs,
     )
     tab_btn_twister.click(
-        on_tab_twister, inputs=None, outputs=tab_twister_outputs,
+        on_tab_twister, inputs=[level_state], outputs=tab_twister_outputs,
     )
     tab_btn_profile.click(
         on_tab_profile,

@@ -456,7 +456,7 @@ footer, .gradio-container footer { display: none !important; }
   margin: 0 0 0.5rem 0;
 }
 .rhotic-modal p {
-  color: var(--rhotic-ink);
+  color: #1B3A4B;
   font-size: 0.9375rem;
   line-height: 1.6;
   margin: 0.5rem 0;
