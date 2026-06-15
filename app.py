@@ -354,13 +354,20 @@ def _sidebar_html(view: str) -> str:
 
 
 def _twister_card_html(twister: dict) -> str:
-    """Render the daily Twister hero card."""
-    today_str = datetime.date.today().strftime("%A, %B %d")
+    """Render the daily Twister hero card.
+
+    The date is rendered as a placeholder span filled in by JS using the
+    user's browser-local Date(), so the label is accurate regardless of
+    the Space's server timezone (Spaces run in UTC by default).
+    """
+    fallback = datetime.date.today().strftime("%A, %B %d")
     return (
         "<div class='rhotic-twister-card'>"
         "  <div class='rhotic-twister-eyebrow'>Today's Tongue Twister</div>"
         f" <div class='rhotic-twister-text'>{twister['text']}</div>"
-        f" <div class='rhotic-twister-meta'>{today_str} · /r/ challenge</div>"
+        "  <div class='rhotic-twister-meta'>"
+        f"   <span class='rhotic-twister-date'>{fallback}</span> · /r/ challenge"
+        "  </div>"
         "</div>"
     )
 
@@ -1248,20 +1255,31 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
             sr, audio = tts_mod.synthesize_full(err)
             return (sr, audio), err, "", gr.update(value=None)
 
+        print(
+            f"[score] twister={twister['text']!r} "
+            f"r_quality={score['r_quality']} error={score['error_detail']} "
+            f"f3={score['f3_hz']} r_seg={score['r_start_s']}-{score['r_end_s']}s "
+            f"overall={score['overall_score']:.2f}"
+        )
+
+        # Same coach path as the Practice tab — exercise_type="phrase"
+        # nudges the SYSTEM_PROMPT's connected-speech mode.
+        state = {
+            "current_target_word": twister["text"],
+            "exercise_type": "phrase",
+            "history": [],
+        }
+        coach_result = coach_turn(state, score, None)
+        reply = coach_result["spoken_reply"]
+        high_score = _is_attempt_correct(score)
+        is_correct = high_score or bool(coach_result.get("is_correct"))
+
         # Natural thinking pause (matches Practice — the blob's thinking
         # pose has time to be visible thanks to the state_bridge flow).
         time.sleep(random.uniform(2.0, 4.0))
 
-        quality = score.get("r_quality")
-        if quality == "correct":
-            reply = "Nice work — your /r/ came through clearly!"
-        elif quality == "approaching":
-            reply = "Getting there. Your /r/ is forming but not locked in yet."
-        else:
-            reply = "Let me hear that again. Focus on the /r/ — try slowing down."
         sr, audio = tts_mod.synthesize_full(reply)
-        high_score = quality == "correct"
-        celebrate = f"go-{time.time()}" if high_score else ""
+        celebrate = f"go-{time.time()}" if is_correct else ""
         return (sr, audio), reply, celebrate, gr.update(value=None)
 
     # ---------------------------------------------------------------------------
@@ -1365,7 +1383,32 @@ with gr.Blocks(theme=THEME, css=CUSTOM_CSS, title="Rhotic R Coach") as demo:
     const tab = e.target.closest('.rhotic-tab[data-tab]');
     if (!tab) return;
     rhoClickHidden('hidden-tab-' + tab.dataset.tab);
+    // The twister card re-renders server-side on tab activation; queue a
+    // few refreshes so we overwrite the server's UTC date string with the
+    // user's actual browser-local date as soon as the DOM is present.
+    if (tab.dataset.tab === 'twister') {
+      setTimeout(rhoticUpdateTwisterDate, 100);
+      setTimeout(rhoticUpdateTwisterDate, 400);
+      setTimeout(rhoticUpdateTwisterDate, 1200);
+    }
   });
+
+  // Replace the server-rendered date label with the user's browser-local
+  // date. The server runs in UTC, so without this the label can be off
+  // by a day for evening users on the US west coast.
+  function rhoticUpdateTwisterDate() {
+    const els = document.querySelectorAll('.rhotic-twister-date');
+    if (!els.length) return;
+    const today = new Date();
+    const label = today.toLocaleDateString(undefined, {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+    els.forEach(function(el) { el.textContent = label; });
+  }
+  window.rhoticUpdateTwisterDate = rhoticUpdateTwisterDate;
+  // Also try on initial load in case the user lands on the twister tab.
+  setTimeout(rhoticUpdateTwisterDate, 500);
+  setTimeout(rhoticUpdateTwisterDate, 2000);
 
   // Practice / Twister action-row buttons (Listen / Record / Next).
   document.addEventListener('click', function(e) {
