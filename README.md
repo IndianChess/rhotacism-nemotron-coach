@@ -65,10 +65,13 @@ Every model runs locally. No mic audio leaves the machine. The LLM coach stays o
 | Component | Model | Params | Where |
 |---|---|---|---|
 | Phoneme transcription | `vitouphy/wav2vec2-xls-r-300m-phoneme` | ~315 M | local |
-| Coach LLM | `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` (Q4_K_M) | 4 B | local (llama.cpp) |
+| Coach LLM (Tiny Titan mode) | `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` (Q4_K_M) | 4 B | local (llama.cpp) |
+| Coach LLM (hosted Space) | `nvidia/Llama-3.1-Nemotron-Nano-8B-v1` | 8 B | HF Inference router |
 | Voice (TTS) | `pocket-tts` | ~250 M | local |
 
-Largest model in the pipeline: 4 B parameters. Total footprint sits well under the Build Small cap and fits the Tiny Titan brief.
+> ⚠️ **About the hosted Space right now:** the public Space is using the **HF Inference router (8 B Nemotron)** for coach replies because the CPU-tier Space can't run the 4 B GGUF in-process fast enough (~5 min per turn, sometimes broken). Flip `COACH_BACKEND=local` to use the **4 B local model**, which is what qualifies the project for the Tiny Titan badge. See "Coach backend" below.
+
+Largest model in the local Tiny Titan pipeline: 4 B parameters. Both modes stay well under the Build Small 32 B cap.
 
 ## Features
 
@@ -97,18 +100,26 @@ cp .env.example .env                # optional: add HF_TOKEN for OAuth progress 
 
 ## Coach backend
 
-Rhotic loads `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` locally through llama.cpp. The Q4_K_M quant is 2.84 GB on disk and runs on Metal, CUDA, or CPU depending on the host.
+Two modes, picked by the `COACH_BACKEND` env var:
 
-On Apple Silicon, warm coach turns come back in a couple of seconds. The first turn after boot is slower because of prefill. On Zero GPU, the model loads inside the GPU-allocated call.
+**`router` (default, used by the hosted Space)**
+Calls `nvidia/Llama-3.1-Nemotron-Nano-8B-v1` through the HF Inference router. Needs `HF_TOKEN` set (Space secret, or `.env` locally). Fast and reliable, but pulls inference off-device, so this mode does *not* qualify for the Tiny Titan badge.
 
-You can swap the GGUF if you want a different quant:
+**`local` (Tiny Titan mode)**
+Loads `nvidia/NVIDIA-Nemotron-3-Nano-4B-GGUF` in-process through llama.cpp. The Q4_K_M quant is 2.84 GB on disk and runs on Metal, CUDA, or CPU depending on the host. On Apple Silicon, warm coach turns come back in a couple of seconds. The first turn after boot is slower because of prefill. This is the mode that fits the 4 B Tiny Titan brief.
 
 ```bash
+# Run with the local 4B GGUF (Tiny Titan)
+COACH_BACKEND=local python app.py
+
+# Pick a different GGUF / quant
 COACH_BACKEND=local \
 COACH_LOCAL_REPO=lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF \
 COACH_LOCAL_QUANT=Q6_K \
 python app.py
 ```
+
+To flip the hosted Space to Tiny Titan mode, set `COACH_BACKEND=local` as a Space variable and redeploy on a hardware tier that can carry llama.cpp (ZeroGPU or a paid CPU upgrade).
 
 ## Deploy on Hugging Face Spaces
 

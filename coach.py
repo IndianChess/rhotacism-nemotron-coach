@@ -50,7 +50,10 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Backend selection
 # ---------------------------------------------------------------------------
-BACKEND = os.environ.get("COACH_BACKEND", "local").lower()
+# Default to the HF Inference router because the in-process llama.cpp path
+# is too slow on CPU-tier Spaces and unreliable on ZeroGPU. To run the model
+# locally (e.g. Apple Silicon dev with Metal), set COACH_BACKEND=local.
+BACKEND = os.environ.get("COACH_BACKEND", "router").lower()
 if BACKEND not in {"router", "local"}:
     print(f"[coach] unknown COACH_BACKEND={BACKEND!r}, falling back to 'router'")
     BACKEND = "router"
